@@ -22,7 +22,11 @@ const Header = () => {
   };
 
   return (
-    <AppBar position='static'>
+    <AppBar
+      position='static'
+      color='transparent'
+      style={{ backgroundColor: '#FFFFFF' }}
+    >
       <Toolbar>
         <Container>
           <Grid container alignItems='center'>
@@ -32,16 +36,17 @@ const Header = () => {
               xs={4}
               style={{ display: 'flex', justifyContent: 'flex-start' }}
             >
-              {userRole === 'ADMIN' && (
+              {/* {isLoggedIn && ( */}
+              {true && (
                 <>
-                  <Button color='inherit' component={Link} to='/member/list'>
+                  <Button color='inherit' component={Link} to='/user/manage'>
                     회원관리
+                  </Button>
+                  <Button color='inherit' component={Link} to='/order/manage'>
+                    주문관리
                   </Button>
                   <Button color='inherit' component={Link} to='/product/manage'>
                     상품관리
-                  </Button>
-                  <Button color='inherit' href='/order/list'>
-                    실시간 주문 ()
                   </Button>
                 </>
               )}
@@ -50,7 +55,7 @@ const Header = () => {
             {/* 가운데 메뉴 */}
             <Grid item xs={4} style={{ textAlign: 'center' }}>
               <Button color='inherit' component={Link} to='/'>
-                <Typography variant='h6'>PlayData Shop</Typography>
+                <Typography variant='h6'>saytouche Admin</Typography>
               </Button>
             </Grid>
 
@@ -60,14 +65,8 @@ const Header = () => {
               xs={4}
               style={{ display: 'flex', justifyContent: 'flex-end' }}
             >
-              <Button color='inherit' component={Link} to='/product/list'>
-                상품목록
-              </Button>
               {isLoggedIn && (
                 <>
-                  <Button color='inherit' component={Link} to='/order/cart'>
-                    장바구니
-                  </Button>
                   <Button color='inherit' component={Link} to='/mypage'>
                     마이페이지
                   </Button>

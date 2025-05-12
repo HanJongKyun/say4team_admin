@@ -1,7 +1,9 @@
 import { Container, Typography } from '@mui/material';
-import React from 'react';
+import React, { useContext } from 'react';
+import AuthContext from '../context/UserContext';
 
 const Home = () => {
+  const { isLoggedIn, userRole } = useContext(AuthContext);
   return (
     <Container>
       <Typography variant='h1' align='center' gutterBottom>

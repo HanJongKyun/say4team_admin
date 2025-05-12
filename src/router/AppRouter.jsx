@@ -15,7 +15,6 @@ const AppRouter = () => {
       <Route path='/' element={<Home />} />
       <Route path='/member/create' element={<MemberCreate />} />
       <Route path='/login' element={<LoginPage />} />
-      <Route path='/product/list' element={<ProductList />} />
       <Route
         path='/order/cart'
         element={<PrivateRouter element={<OrderPage />} />}
@@ -24,7 +23,25 @@ const AppRouter = () => {
       <Route
         path='/product/manage'
         element={
+          <PrivateRouter element={<ProductList />} requiredRole='ADMIN' />
+        }
+      />
+      <Route
+        path='/product/create'
+        element={
           <PrivateRouter element={<ProductCreate />} requiredRole='ADMIN' />
+        }
+      />
+      <Route
+        path='/order/manage'
+        element={
+          <PrivateRouter element={<ProductList />} requiredRole='ADMIN' />
+        }
+      />
+      <Route
+        path='/member/manage'
+        element={
+          <PrivateRouter element={<ProductList />} requiredRole='ADMIN' />
         }
       />
     </Routes>

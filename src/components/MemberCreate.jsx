@@ -12,6 +12,14 @@ import { replace, useNavigate } from 'react-router-dom';
 import { API_BASE_URL, USER } from '../configs/host-config';
 import AuthContext from '../context/UserContext';
 
+//날짜관련 패키지 임포트
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import dayjs from 'dayjs';
+import 'dayjs/locale/ko';
+dayjs.locale('ko');
+
 const MemberCreate = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -19,6 +27,8 @@ const MemberCreate = () => {
   const [city, setCity] = useState('');
   const [street, setStreet] = useState('');
   const [zipcode, setZipcode] = useState('');
+  // 생년월일 입력
+  const [birthDate, setBirthDate] = useState(dayjs());
 
   // react router dom에서 제공하는 훅 useNavigate
   // 사용자가 특정 요소를 누르지 않아도 이벤트 등에서 페이지를 이동시킬 때 사용하는 훅
@@ -46,7 +56,7 @@ const MemberCreate = () => {
       },
     };
 
-    const res = await fetch(`${API_BASE_URL}${USER}/create`, {
+    const res = await fetch(`${API_BASE_URL}${USER}/create?role=admin`, {
       method: 'POST',
       headers: {
         'Content-type': 'application/json',
@@ -94,14 +104,6 @@ const MemberCreate = () => {
           <CardContent>
             <form onSubmit={memberCreate}>
               <TextField
-                label='이름'
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                fullWidth
-                margin='normal'
-                required
-              />
-              <TextField
                 label='Email'
                 type='email'
                 value={email}
@@ -119,8 +121,37 @@ const MemberCreate = () => {
                 margin='normal'
                 required
               />
+              <Grid container spacing={2} alignItems='center'>
+                {/* 이름 필드 */}
+                <Grid item xs={6}>
+                  <TextField
+                    label='이름'
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    fullWidth
+                    margin='none'
+                    required
+                  />
+                </Grid>
+
+                {/* 생년월일 필드 */}
+                <Grid item xs={6}>
+                  <TextField
+                    label='생년월일'
+                    type='date'
+                    value={birthDate}
+                    onChange={(e) => {
+                      setBirthDate(e.target.value);
+                    }}
+                    fullWidth
+                    required
+                    InputLabelProps={{ shrink: true }} // ← 이거 안 쓰면 라벨 겹침
+                  />
+                </Grid>
+              </Grid>
+
               <TextField
-                label='도시'
+                label='도로명주소'
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
                 fullWidth
@@ -130,13 +161,6 @@ const MemberCreate = () => {
                 label='상세주소'
                 value={street}
                 onChange={(e) => setStreet(e.target.value)}
-                fullWidth
-                margin='normal'
-              />
-              <TextField
-                label='우편번호'
-                value={zipcode}
-                onChange={(e) => setZipcode(e.target.value)}
                 fullWidth
                 margin='normal'
               />
