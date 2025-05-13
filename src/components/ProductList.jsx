@@ -24,7 +24,7 @@ import { throttle } from 'lodash';
 import { API_BASE_URL, PROD } from '../configs/host-config';
 
 const ProductList = ({ pageTitle }) => {
-  const [searchType, setSearchType] = useState('optional');
+  const [searchType, setSearchType] = useState('ALL');
   const [searchValue, setSearchValue] = useState('');
   const [productList, setProductList] = useState([]);
   const [selected, setSelected] = useState({});
@@ -72,20 +72,20 @@ const ProductList = ({ pageTitle }) => {
       page: currentPage,
     };
 
-    // 만약 사용자가 조건을 선택했고, 검색어를 입력했다면 프로퍼티를 추가하자.
-    if (searchType !== 'optional' && searchValue) {
-      params.category = searchType;
-      params.searchName = searchValue;
-    }
+    params.searchType = searchType;
+    params.searchName = searchValue;
 
     console.log('백엔드로 보낼 params: ', params);
 
     setIsLoading(true); // 요청 보내기 바로 직전에 로딩 상태 true 만들기
 
     try {
-      const res = await axios.get(`${API_BASE_URL}${PROD}/list`, {
-        params,
-      });
+      const res = await axios.get(
+        `${API_BASE_URL}${PROD}/list?sort=productId,DESC`,
+        {
+          params,
+        },
+      );
       const data = await res.data;
       console.log('result.length: ', data.result.length);
 
@@ -167,18 +167,18 @@ const ProductList = ({ pageTitle }) => {
   };
 
   return (
-    <Container>
+    <Container sx={{ mt: 5, mb: 10 }}>
       <Grid
         container
         justifyContent='space-between'
+        alignItems='center'
         spacing={2}
-        className='mt-5'
+        sx={{ mb: 4 }}
       >
-        <Grid item>
+        <Grid item xs={12} md={8}>
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              // 검색 렌더링 진행 시 기존 목록을 지우고 다시 렌더링 해야 해요!
               setProductList([]);
               setCurrentPage(0);
               setIsLoading(false);
@@ -186,16 +186,26 @@ const ProductList = ({ pageTitle }) => {
               loadProduct();
             }}
           >
-            <Grid container spacing={2}>
+            <Grid container spacing={2} alignItems='center'>
               <Grid item>
                 <Select
                   value={searchType}
                   onChange={(e) => setSearchType(e.target.value)}
                   displayEmpty
+                  size='small' // ← 이거 중요!
+                  sx={{ minWidth: 140, height: 40, fontSize: 14 }} // ← 텍스트 크기 & 높이 정렬
                 >
-                  <MenuItem value='optional'>선택</MenuItem>
-                  <MenuItem value='name'>상품명</MenuItem>
-                  <MenuItem value='category'>카테고리</MenuItem>
+                  <MenuItem value='ALL'>전체</MenuItem>
+                  {/* 카테고리 */}
+                  <MenuItem value='1'>Doodle Persian</MenuItem>
+                  <MenuItem value='2'>É</MenuItem>
+                  <MenuItem value='3'>Textiles</MenuItem>
+                  <MenuItem value='4'>Homedeco</MenuItem>
+                  <MenuItem value='5'>Mirror</MenuItem>
+                  <MenuItem value='6'>Lighting</MenuItem>
+                  <MenuItem value='7'>Lifestyle</MenuItem>
+                  <MenuItem value='8'>Goods</MenuItem>
+                  <MenuItem value='9'>dummy</MenuItem>
                 </Select>
               </Grid>
               <Grid item>
@@ -203,35 +213,44 @@ const ProductList = ({ pageTitle }) => {
                   value={searchValue}
                   onChange={(e) => setSearchValue(e.target.value)}
                   label='Search'
+                  size='small'
+                  sx={{ minWidth: 200 }}
                 />
               </Grid>
               <Grid item>
-                <Button type='submit'>검색</Button>
+                <Button type='submit' variant='contained'>
+                  검색
+                </Button>
               </Grid>
             </Grid>
           </form>
         </Grid>
 
-        {!isAdmin && (
-          <Grid item>
-            <Button onClick={handleAddToCart} color='secondary'>
+        <Grid item xs={12} md='auto'>
+          {!isAdmin ? (
+            <Button
+              onClick={handleAddToCart}
+              variant='outlined'
+              color='secondary'
+              sx={{ ml: 1 }}
+            >
               장바구니에 담기
             </Button>
-          </Grid>
-        )}
-
-        {isAdmin && (
-          <Grid item>
-            <Button href='/product/create' color='success'>
+          ) : (
+            <Button href='/product/create' variant='contained' color='success'>
               상품등록
             </Button>
-          </Grid>
-        )}
+          )}
+        </Grid>
       </Grid>
 
-      <Card>
+      <Card sx={{ p: 2 }}>
         <CardContent>
-          <Typography variant='h6' align='center'>
+          <Typography
+            variant='h6'
+            align='center'
+            sx={{ mb: 3, fontWeight: 'bold' }}
+          >
             {pageTitle}
           </Typography>
           <Table>
@@ -250,21 +269,25 @@ const ProductList = ({ pageTitle }) => {
                 <TableRow key={product.id}>
                   <TableCell>
                     <img
-                      src={product.imagePath}
+                      src={product.thumbnailPath}
                       alt={product.name}
-                      style={{ height: '100px', width: 'auto' }}
+                      style={{
+                        height: '100px',
+                        width: 'auto',
+                        borderRadius: '8px',
+                        objectFit: 'cover',
+                      }}
                     />
                   </TableCell>
                   <TableCell>{product.name}</TableCell>
-                  <TableCell>{product.price}</TableCell>
+                  <TableCell>{product.price.toLocaleString()}원</TableCell>
                   <TableCell>{product.stockQuantity}</TableCell>
                   {!isAdmin && (
                     <TableCell>
                       <TextField
                         type='number'
                         value={product.quantity || 0}
-                        // 수량이 변경될 때마다 productList에서 지금 수량이 변경된 그 상품을 찾아서
-                        // quantity라는 새로운 프로퍼티에 값을 세팅하겠다.
+                        size='small'
                         onChange={(e) =>
                           setProductList((prevList) =>
                             prevList.map((p) =>
@@ -274,15 +297,13 @@ const ProductList = ({ pageTitle }) => {
                             ),
                           )
                         }
-                        style={{ width: '70px' }}
+                        sx={{ width: 80 }}
                       />
                     </TableCell>
                   )}
                   {!isAdmin && (
                     <TableCell>
                       <Checkbox
-                        // 특정 변수, 객체, 배열 등등을 논리값으로 변환하고 싶을때
-                        // 앞에 !! 붙이면 논리값으로 변환됩니다.
                         checked={!!selected[product.id]}
                         onChange={(e) =>
                           handleCheckboxChange(product.id, e.target.checked)

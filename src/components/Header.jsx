@@ -37,7 +37,7 @@ const Header = () => {
               style={{ display: 'flex', justifyContent: 'flex-start' }}
             >
               {/* {isLoggedIn && ( */}
-              {true && (
+              {isLoggedIn && (
                 <>
                   <Button color='inherit' component={Link} to='/user/manage'>
                     회원관리

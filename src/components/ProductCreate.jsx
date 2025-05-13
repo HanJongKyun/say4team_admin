@@ -1,33 +1,40 @@
 import {
+  Box,
   Button,
   Card,
   CardContent,
   CardHeader,
   Container,
   Grid,
+  MenuItem,
   TextField,
+  Typography,
 } from '@mui/material';
 import React, { useContext, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import addImage from '../assets/image-add.png';
 import axiosInstance from '../configs/axios-config';
 import { API_BASE_URL, PROD } from '../configs/host-config';
 import { handleAxiosError } from '../configs/HandleAxiosError';
 import AuthContext from '../context/UserContext';
+import UploadIcon from '@mui/icons-material/Upload';
 
 const ProductCreate = () => {
   const [name, setName] = useState('');
-  const [category, setCategory] = useState('');
+  const [categoryId, setCategoryId] = useState('선택');
   const [price, setPrice] = useState('');
   const [stockQuantity, setStockQuantity] = useState('');
-  const [productImage, setProductImage] = useState(null);
+  const [mainImage, setMainImage] = useState(null);
+  const [productImages, setProductImages] = useState([]);
   const [thumbnailImage, setThumbnailImage] = useState(null);
+  const [description, setDescription] = useState('');
 
   const navigate = useNavigate();
   const { onLogout } = useContext(AuthContext);
 
   // useRef를 사용하여 특정 요소를 참조하기
   const $fileTag = useRef();
+  const $mainRef = useRef();
+  const $detailRef = useRef();
 
   const productCreate = async (e) => {
     e.preventDefault();
@@ -35,10 +42,15 @@ const ProductCreate = () => {
     try {
       const registData = new FormData();
       registData.append('name', name);
-      registData.append('category', category);
+      registData.append('description', description);
+      registData.append('categoryId', categoryId);
       registData.append('price', price);
       registData.append('stockQuantity', stockQuantity);
-      registData.append('productImage', productImage);
+      productImages.forEach((file) => {
+        registData.append('images', file); // 🔥 key는 같게, append는 반복!
+      });
+      registData.append('thumbnailImage', thumbnailImage);
+      registData.append('mainImage', mainImage);
 
       // axiosInstance의 기본 컨텐트 타입은 JSON -> JSON 보낼 때는 개꿀
       // 지금 우리가 보내야 되는 컨텐트는 FormData -> multipart/form-data 직접 명시
@@ -47,50 +59,44 @@ const ProductCreate = () => {
           'Content-Type': 'multipart/form-data',
         },
       });
-      alert('상품 등록 완료!');
-      navigate('/product/list');
+      console.log(registData);
     } catch (e) {
       handleAxiosError(e, onLogout, navigate);
     }
+    alert('상품 등록 완료!');
+    navigate('/product/manage');
   };
 
   // 사용자가 파일을 선택해서 업로드하면 정보를 읽어들여서
   // 썸네일 띄우는 함수
   const fileUpdate = () => {
     const file = $fileTag.current.files[0];
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    setProductImage(file);
 
-    reader.onloadend = () => {
-      setThumbnailImage(reader.result);
-    };
+    setThumbnailImage(file);
+  };
+
+  const handleDetailImageUpload = () => {
+    const newImages = Array.from($detailRef.current.files);
+    setProductImages((prev) => [...prev, ...newImages]);
+  };
+
+  const handleMainImageUpload = () => {
+    const mainImage = $mainRef.current.files[0];
+    setMainImage(mainImage);
+  };
+
+  const handleDeleteImage = (targetName) => {
+    setProductImages((prev) => prev.filter((file) => file.name !== targetName));
   };
 
   return (
-    <Container>
+    <Container sx={{ mt: 4 }}>
       <Grid container justifyContent='center'>
         <Grid item xs={12} md={8}>
           <Card>
             <CardHeader title='상품등록' style={{ textAlign: 'center' }} />
             <CardContent>
               <form onSubmit={productCreate}>
-                <div
-                  className='thumbnail-box'
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    borderRadius: '20px',
-                  }}
-                  onClick={() => $fileTag.current.click()}
-                >
-                  <img
-                    src={thumbnailImage || addImage}
-                    alt='prod-image'
-                    style={{ width: '225px' }}
-                  />
-                </div>
                 <TextField
                   label='상품명'
                   value={name}
@@ -100,13 +106,35 @@ const ProductCreate = () => {
                   required
                 />
                 <TextField
+                  label='제품 설명'
+                  multiline
+                  rows={6}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  fullWidth
+                  variant='outlined'
+                  placeholder='제품에 대한 자세한 내용을 입력해 주세요.'
+                />
+                <TextField
+                  select
                   label='카테고리'
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
+                  value={categoryId}
+                  onChange={(e) => setCategoryId(e.target.value)}
                   fullWidth
                   margin='normal'
                   required
-                />
+                >
+                  <MenuItem value='선택'>선택</MenuItem>
+                  <MenuItem value='1'>Doodle Persian</MenuItem>
+                  <MenuItem value='2'>É</MenuItem>
+                  <MenuItem value='3'>Textiles</MenuItem>
+                  <MenuItem value='4'>Homedeco</MenuItem>
+                  <MenuItem value='5'>Mirror</MenuItem>
+                  <MenuItem value='6'>Lighting</MenuItem>
+                  <MenuItem value='7'>Lifestyle</MenuItem>
+                  <MenuItem value='8'>Goods</MenuItem>
+                  <MenuItem value='9'>dummy</MenuItem>
+                </TextField>
                 <TextField
                   label='가격'
                   type='number'
@@ -125,19 +153,149 @@ const ProductCreate = () => {
                   margin='normal'
                   required
                 />
-                <input
-                  type='file'
-                  accept='image/*'
-                  onChange={fileUpdate}
-                  style={{ display: 'none' }}
-                  required
-                  ref={$fileTag}
-                />
+
+                <Box sx={{ my: 3 }}>
+                  <Typography variant='subtitle1'>썸네일 이미지</Typography>
+                  <Button
+                    variant='outlined'
+                    startIcon={<UploadIcon />}
+                    onClick={() => $fileTag.current.click()}
+                    sx={{
+                      color: '#000000', // 글씨 검정
+                      borderColor: '#000000', // 테두리 검정
+                      '&:hover': {
+                        backgroundColor: '#000000', // 호버 시 배경 검정
+                        color: '#ffffff', // 호버 시 글씨 흰색
+                        borderColor: '#000000', // 호버 시 테두리 유지
+                      },
+                    }}
+                  >
+                    업로드
+                  </Button>
+
+                  <input
+                    type='file'
+                    accept='image/*'
+                    ref={$fileTag}
+                    onChange={fileUpdate}
+                    style={{ display: 'none' }}
+                  />
+
+                  {thumbnailImage && (
+                    <Typography variant='body2' sx={{ mt: 1 }}>
+                      선택된 파일: {thumbnailImage.name}
+                    </Typography>
+                  )}
+                </Box>
+                <Box sx={{ my: 3 }}>
+                  <Typography variant='subtitle1'>대표 이미지</Typography>
+                  <Button
+                    variant='outlined'
+                    startIcon={<UploadIcon />}
+                    onClick={() => $mainRef.current.click()}
+                    sx={{
+                      color: '#000000', // 글씨 검정
+                      borderColor: '#000000', // 테두리 검정
+                      '&:hover': {
+                        backgroundColor: '#000000', // 호버 시 배경 검정
+                        color: '#ffffff', // 호버 시 글씨 흰색
+                        borderColor: '#000000', // 호버 시 테두리 유지
+                      },
+                    }}
+                  >
+                    업로드
+                  </Button>
+                  <input
+                    type='file'
+                    accept='image/*'
+                    ref={$mainRef}
+                    onChange={handleMainImageUpload}
+                    style={{ display: 'none' }}
+                  />
+                  {mainImage && (
+                    <Typography variant='body2' sx={{ mt: 1 }}>
+                      선택된 파일: {mainImage.name}
+                    </Typography>
+                  )}
+                </Box>
+
+                <Box sx={{ mb: 3 }}>
+                  <Typography variant='subtitle1'>상세 이미지</Typography>
+                  <Button
+                    variant='outlined'
+                    startIcon={<UploadIcon />}
+                    onClick={() => $detailRef.current.click()}
+                    sx={{
+                      color: '#000000', // 글씨 검정
+                      borderColor: '#000000', // 테두리 검정
+                      '&:hover': {
+                        backgroundColor: '#000000', // 호버 시 배경 검정
+                        color: '#ffffff', // 호버 시 글씨 흰색
+                        borderColor: '#000000', // 호버 시 테두리 유지
+                      },
+                    }}
+                  >
+                    업로드
+                  </Button>
+                  <input
+                    type='file'
+                    accept='image/*'
+                    ref={$detailRef}
+                    onChange={handleDetailImageUpload}
+                    multiple
+                    style={{ display: 'none' }}
+                  />
+                  {productImages.length > 0 && (
+                    <Box
+                      sx={{
+                        mt: 2,
+                        maxHeight: 140,
+                        overflowY: 'auto',
+                        border: '1px solid #ddd',
+                        borderRadius: 1,
+                        p: 1,
+                      }}
+                    >
+                      {productImages.map((file, index) => (
+                        <Box
+                          key={file.name + index}
+                          sx={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            borderBottom: '1px solid #eee',
+                            py: 1,
+                          }}
+                        >
+                          <Typography variant='body2'>{file.name}</Typography>
+                          <Button
+                            size='small'
+                            variant='outlined'
+                            color='error'
+                            onClick={() =>
+                              setProductImages((prev) =>
+                                prev.filter((f) => f.name !== file.name),
+                              )
+                            }
+                          >
+                            삭제
+                          </Button>
+                        </Box>
+                      ))}
+                    </Box>
+                  )}
+                </Box>
                 <Button
                   type='submit'
-                  color='primary'
                   variant='contained'
                   fullWidth
+                  sx={{
+                    backgroundColor: '#000000', // 검정 배경
+                    color: '#ffffff', // 흰색 글씨
+                    '&:hover': {
+                      backgroundColor: '#333333', // 호버 시 약간 밝은 검정
+                    },
+                  }}
                 >
                   등록
                 </Button>

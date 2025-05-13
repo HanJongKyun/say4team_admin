@@ -18,15 +18,17 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ko';
+import PhoneInput from 'react-phone-input-2';
+import 'react-phone-input-2/lib/material.css';
+
 dayjs.locale('ko');
 
 const MemberCreate = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [city, setCity] = useState('');
-  const [street, setStreet] = useState('');
-  const [zipcode, setZipcode] = useState('');
+  const [address, setAddress] = useState('');
+  const [phone, setPhone] = useState('');
   // 생년월일 입력
   const [birthDate, setBirthDate] = useState(dayjs());
 
@@ -43,17 +45,19 @@ const MemberCreate = () => {
 
   const memberCreate = async (e) => {
     e.preventDefault();
+    if (password.length < 8) {
+      alert('비밀번호 8자리 이상으로 작성해주세요!');
+      return;
+    }
 
     // 백엔드에게 전송할 데이터 형태를 만들자 (DTO 형태대로)
     const registData = {
       name,
       email,
       password,
-      address: {
-        city,
-        street,
-        zipCode: zipcode,
-      },
+      address,
+      birthDate,
+      phone,
     };
 
     const res = await fetch(`${API_BASE_URL}${USER}/create?role=admin`, {
@@ -71,29 +75,6 @@ const MemberCreate = () => {
     } else {
       alert(data.statusMessage);
     }
-
-    /*
-    fetch(`http://localhost:8181/user/create`, {
-      method: 'POST',
-      headers: {
-        'Content-type': 'application/json',
-      },
-      body: JSON.stringify(registData),
-    })
-      .then((res) => {
-        if (res.status === 201) return res.json();
-        else {
-          alert('이메일이 중복되었습니다. 다른 이메일로 다시 시도해 보세요!');
-          return;
-        }
-      })
-      .then((data) => {
-        if (data) {
-          console.log('백엔드로부터 전달된 데이터: ', data);
-          alert(`${data.result}님 환영합니다!`);
-        }
-      });
-    */
   };
 
   return (
@@ -151,18 +132,18 @@ const MemberCreate = () => {
               </Grid>
 
               <TextField
-                label='도로명주소'
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
+                label='주소'
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
                 fullWidth
                 margin='normal'
               />
-              <TextField
-                label='상세주소'
-                value={street}
-                onChange={(e) => setStreet(e.target.value)}
-                fullWidth
-                margin='normal'
+              <PhoneInput
+                country={'kr'} // 국가 코드
+                value={phone}
+                onChange={setPhone}
+                inputStyle={{ width: '100%' }}
+                enableAreaCodes={true}
               />
               <CardActions>
                 <Button
