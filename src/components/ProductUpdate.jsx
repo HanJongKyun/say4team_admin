@@ -32,7 +32,9 @@ const ProductUpdate = () => {
   const { id } = useParams();
   useEffect(() => {
     const fetchDetail = async () => {
-      const res = await axiosInstance.get(`${API_BASE_URL}${PROD}/${id}`);
+      const res = await axiosInstance.get(
+        `${API_BASE_URL}${PROD}/detail/${id}`,
+      );
       setProduct(res.data.result);
     };
     fetchDetail();
