@@ -39,7 +39,7 @@ const Header = () => {
               {/* {isLoggedIn && ( */}
               {isLoggedIn && (
                 <>
-                  <Button color='inherit' component={Link} to='/user/manage'>
+                  <Button color='inherit' component={Link} to='/member/manage'>
                     회원관리
                   </Button>
                   <Button color='inherit' component={Link} to='/order/manage'>

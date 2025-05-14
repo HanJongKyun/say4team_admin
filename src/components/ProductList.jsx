@@ -18,16 +18,24 @@ import {
 import React, { useContext, useEffect, useState } from 'react';
 import AuthContext from '../context/UserContext';
 import CartContext from '../context/CartContext';
-import { useNavigate } from 'react-router-dom';
+import { replace, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { throttle } from 'lodash';
 import { API_BASE_URL, PROD } from '../configs/host-config';
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 
 const ProductList = ({ pageTitle }) => {
+  const navigate = useNavigate();
+  const { isLoggedIn } = useContext(AuthContext);
+  if (!isLoggedIn) {
+    alert('로그인하세요');
+    navigate('/', replace); // ← 이렇게 써야 함!
+  }
+
   const [searchType, setSearchType] = useState('ALL');
   const [searchValue, setSearchValue] = useState('');
   const [productList, setProductList] = useState([]);
-  const [selected, setSelected] = useState({});
+  const [showScrollTop, setShowScrollTop] = useState(false);
   const [currentPage, setCurrentPage] = useState(0); // 현재 페이지를 나타내는 변수
   const [isLastPage, setLastPage] = useState(false); // 마지막 페이지 여부
   // 현재 로딩중이냐? -> 백엔드로부터 상품 목록 요청을 보내서 아직 데이터를 받아오는 중인가?
@@ -37,8 +45,18 @@ const ProductList = ({ pageTitle }) => {
   const { userRole } = useContext(AuthContext);
   const isAdmin = userRole === 'ADMIN';
 
-  const { addCart } = useContext(CartContext);
-  const navigate = useNavigate();
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 300);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   useEffect(() => {
     loadProduct(); // 처음 화면에 진입하면 1페이지 내용을 불러오자. (매개값은 필요 없음)
@@ -115,55 +133,8 @@ const ProductList = ({ pageTitle }) => {
     }
   };
 
-  // 장바구니 클릭 이벤트 핸들러
-  const handleAddToCart = () => {
-    // 특정 객체에서 key값만 뽑아서 문자열 배열로 리턴해 주는 메서드
-    const selectedProduct = Object.keys(selected);
-
-    // key값만 뽑아서 selected에 들어있는 상품 중에 false 다 빼고 true인 것만 담겠다.
-    const filtered = selectedProduct.filter((key) => selected[key]);
-
-    // 사용자가 선택한 수량까지 파악해서 장바구니에 넣어 줍시다.
-    const finalSelected = filtered.map((key) => {
-      const product = productList.find((p) => p.id === parseInt(key));
-      return {
-        id: product.id,
-        name: product.name,
-        quantity: product.quantity,
-      };
-    });
-    console.log(finalSelected);
-
-    if (finalSelected.length < 1) {
-      alert('장바구니에 추가할 상품을 선택해 주세요!');
-      return;
-    }
-
-    for (let p of finalSelected) {
-      if (!p.quantity) {
-        alert('수량이 0개인 상품은 담을 수 없습니다.');
-        return;
-      }
-    }
-
-    if (confirm('상품을 장바구니에 추가하시겠습니까?')) {
-      // 카트로 상품을 보내주자. (addCart에는 상품을 하나씩 보내세요.)
-      finalSelected.forEach((product) => addCart(product));
-      alert('선택한 상품이 장바구니에 추가되었습니다.');
-    }
-
-    if (confirm('장바구니 화면으로 이동할까요?')) {
-      navigate('/order/cart');
-    }
-  };
-
-  // 체크박스 클릭 이벤트 핸들러
-  const handleCheckboxChange = (productId, checked) => {
-    // 사용자가 특정 상품을 선택했는지에 대한 상태를 관리
-    setSelected((prev) => ({
-      ...prev,
-      [productId]: checked,
-    }));
+  const handleProductClick = (productId) => {
+    navigate(`/product/detail/${productId}`);
   };
 
   return (
@@ -266,7 +237,12 @@ const ProductList = ({ pageTitle }) => {
             </TableHead>
             <TableBody>
               {productList.map((product) => (
-                <TableRow key={product.id}>
+                <TableRow
+                  key={product.id}
+                  hover
+                  sx={{ cursor: 'pointer' }}
+                  onClick={() => handleProductClick(product.id)}
+                >
                   <TableCell>
                     <img
                       src={product.thumbnailPath}
@@ -317,6 +293,30 @@ const ProductList = ({ pageTitle }) => {
           </Table>
         </CardContent>
       </Card>
+      {showScrollTop && (
+        <Button
+          onClick={scrollToTop}
+          variant='contained'
+          sx={{
+            position: 'fixed',
+            bottom: 32,
+            right: 32,
+            zIndex: 1000,
+            minWidth: 'auto',
+            width: 48,
+            height: 48,
+            borderRadius: '50%',
+            backgroundColor: '#000',
+            color: '#fff',
+            boxShadow: 3,
+            '&:hover': {
+              backgroundColor: '#333',
+            },
+          }}
+        >
+          <KeyboardArrowUpIcon />
+        </Button>
+      )}
     </Container>
   );
 };

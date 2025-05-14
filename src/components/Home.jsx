@@ -44,7 +44,7 @@ const Home = () => {
           color='text.secondary'
           sx={{ mt: 2, fontSize: '0.95rem' }}
         >
-          좌측 메뉴에서 원하는 기능을 선택해 관리 업무를 시작해 주세요.
+          상단 메뉴에서 원하는 기능을 선택해 관리 업무를 시작해 주세요.
         </Typography>
       </Box>
     </Container>

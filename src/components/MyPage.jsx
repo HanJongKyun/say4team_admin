@@ -19,7 +19,7 @@ import { API_BASE_URL, USER } from '../configs/host-config';
 import OrderListComponent from './OrderListComponent';
 
 const MyPage = () => {
-  const [memberInfoList, setMemberInfoList] = useState([]);
+  const [memberInfo, setMemberInfo] = useState([]);
   const { userRole, onLogout } = useContext(AuthContext);
   const navigate = useNavigate();
 
@@ -31,27 +31,10 @@ const MyPage = () => {
     */
     const fetchMemberInfo = async () => {
       try {
-        const url = userRole === 'ADMIN' ? '/list' : '/myInfo';
+        const url = '/myInfo';
         const res = await axiosInstance.get(`${API_BASE_URL}${USER}` + url);
 
-        // ADMIN인 경우는 애초에 리스트로 리턴, 일반회원은 직접 배열로 감싸주자.(고차함수 돌려야 되니깐)
-        const data = userRole === 'ADMIN' ? res.data.result : [res.data.result];
-
-        setMemberInfoList((prev) => {
-          return data.map((user) => [
-            { key: '이름', value: user.name },
-            { key: '이메일', value: user.email },
-            { key: '도시', value: user.address?.city || '등록 전' },
-            {
-              key: '상세주소',
-              value: user.address?.street || '등록 전',
-            },
-            {
-              key: '우편번호',
-              value: user.address?.zipCode || '등록 전',
-            },
-          ]);
-        });
+        setMemberInfo([res.data.result]);
       } catch (e) {
         handleAxiosError(e, onLogout, navigate);
       }
@@ -66,26 +49,21 @@ const MyPage = () => {
         <Grid item xs={12} md={8}>
           <Card>
             <CardHeader title='회원정보' style={{ textAlign: 'center' }} />
-            {memberInfoList.map((element, index) => (
-              <CardContent>
-                <Table>
-                  <TableBody key={index}>
-                    {element.map((info, index) => (
-                      <TableRow key={index}>
-                        <TableCell>{info.key}</TableCell>
-                        <TableCell>{info.value}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            ))}
+            <CardContent>
+              <Table>
+                <TableBody>
+                  {memberInfo.map((info, index) => (
+                    <TableRow key={index}>
+                      <TableCell>{info.key}</TableCell>
+                      <TableCell>{info.value}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
           </Card>
         </Grid>
       </Grid>
-
-      {/* OrderListComponent */}
-      <OrderListComponent isAdmin={userRole === 'ADMIN'} />
     </Container>
   );
 };

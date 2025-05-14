@@ -10,15 +10,15 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import React, { useContext, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useContext, useEffect, useRef, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import axiosInstance from '../configs/axios-config';
 import { API_BASE_URL, PROD } from '../configs/host-config';
 import { handleAxiosError } from '../configs/HandleAxiosError';
 import AuthContext from '../context/UserContext';
 import UploadIcon from '@mui/icons-material/Upload';
 
-const ProductCreate = () => {
+const ProductUpdate = () => {
   const [name, setName] = useState('');
   const [categoryId, setCategoryId] = useState('선택');
   const [price, setPrice] = useState('');
@@ -27,6 +27,16 @@ const ProductCreate = () => {
   const [productImages, setProductImages] = useState([]);
   const [thumbnailImage, setThumbnailImage] = useState(null);
   const [description, setDescription] = useState('');
+  const [product, setProduct] = useState(null);
+
+  const { id } = useParams();
+  useEffect(() => {
+    const fetchDetail = async () => {
+      const res = await axiosInstance.get(`${API_BASE_URL}${PROD}/${id}`);
+      setProduct(res.data.result);
+    };
+    fetchDetail();
+  }, [id]);
 
   const navigate = useNavigate();
   const { onLogout } = useContext(AuthContext);
@@ -36,7 +46,7 @@ const ProductCreate = () => {
   const $mainRef = useRef();
   const $detailRef = useRef();
 
-  const productCreate = async (e) => {
+  const productUpdate = async (e) => {
     e.preventDefault();
 
     try {
@@ -46,25 +56,28 @@ const ProductCreate = () => {
       registData.append('categoryId', categoryId);
       registData.append('price', price);
       registData.append('stockQuantity', stockQuantity);
-      productImages.forEach((file) => {
-        registData.append('images', file); // 🔥 key는 같게, append는 반복!
-      });
-      registData.append('thumbnailImage', thumbnailImage);
-      registData.append('mainImage', mainImage);
+      if (productImages) {
+        productImages.forEach((file) => {
+          registData.append('images', file); // 🔥 key는 같게, append는 반복!
+        });
+      }
+      if (thumbnailImage) registData.append('thumbnailImage', thumbnailImage);
+      if (mainImage) registData.append('mainImage', mainImage);
 
       // axiosInstance의 기본 컨텐트 타입은 JSON -> JSON 보낼 때는 개꿀
       // 지금 우리가 보내야 되는 컨텐트는 FormData -> multipart/form-data 직접 명시
-      await axiosInstance.post(`${API_BASE_URL}${PROD}/create`, registData, {
+      await axiosInstance.patch(`${API_BASE_URL}${PROD}/update`, registData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
+        params: { id: id },
       });
       console.log(registData);
     } catch (e) {
       handleAxiosError(e, onLogout, navigate);
     }
-    alert('상품 등록 완료!');
-    navigate('/product/manage');
+    alert('상품 수정 완료!');
+    navigate(`/product/detail/${id}`);
   };
 
   // 사용자가 파일을 선택해서 업로드하면 정보를 읽어들여서
@@ -84,15 +97,24 @@ const ProductCreate = () => {
     const mainImage = $mainRef.current.files[0];
     setMainImage(mainImage);
   };
+  useEffect(() => {
+    if (product) {
+      setName(product.name);
+      setDescription(product.description);
+      setPrice(product.price);
+      setStockQuantity(product.stockQuantity);
+      setCategoryId(product.categoryId);
+    }
+  }, [product]);
 
   return (
     <Container sx={{ mt: 4 }}>
       <Grid container justifyContent='center'>
         <Grid item xs={12} md={8}>
           <Card>
-            <CardHeader title='상품등록' style={{ textAlign: 'center' }} />
+            <CardHeader title='상품수정' style={{ textAlign: 'center' }} />
             <CardContent>
-              <form onSubmit={productCreate}>
+              <form onSubmit={productUpdate}>
                 <TextField
                   label='상품명'
                   value={name}
@@ -151,7 +173,9 @@ const ProductCreate = () => {
                 />
 
                 <Box sx={{ my: 3 }}>
-                  <Typography variant='subtitle1'>썸네일 이미지</Typography>
+                  <Typography variant='subtitle1'>
+                    썸네일 이미지 (미업로드시 기존 이미지가 유지됩니다.)
+                  </Typography>
                   <Button
                     variant='outlined'
                     startIcon={<UploadIcon />}
@@ -184,7 +208,9 @@ const ProductCreate = () => {
                   )}
                 </Box>
                 <Box sx={{ my: 3 }}>
-                  <Typography variant='subtitle1'>대표 이미지</Typography>
+                  <Typography variant='subtitle1'>
+                    대표 이미지 (미업로드시 기존 이미지가 유지됩니다.)
+                  </Typography>
                   <Button
                     variant='outlined'
                     startIcon={<UploadIcon />}
@@ -216,7 +242,9 @@ const ProductCreate = () => {
                 </Box>
 
                 <Box sx={{ mb: 3 }}>
-                  <Typography variant='subtitle1'>상세 이미지</Typography>
+                  <Typography variant='subtitle1'>
+                    상세 이미지 (미업로드시 기존 이미지가 유지됩니다.)
+                  </Typography>
                   <Button
                     variant='outlined'
                     startIcon={<UploadIcon />}
@@ -304,4 +332,4 @@ const ProductCreate = () => {
   );
 };
 
-export default ProductCreate;
+export default ProductUpdate;

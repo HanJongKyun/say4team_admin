@@ -8,6 +8,9 @@ import MyPage from '../components/MyPage';
 import ProductCreate from '../components/ProductCreate';
 import PrivateRouter from './PrivateRouter';
 import { Route, Routes } from 'react-router-dom';
+import ProductDetail from '../components/\bProductDetail';
+import ProductUpdate from '../components/ProductUpdate';
+import MemberList from '../components/MemberList';
 
 const AppRouter = () => {
   return (
@@ -33,6 +36,12 @@ const AppRouter = () => {
         }
       />
       <Route
+        path='/product/edit/:id'
+        element={
+          <PrivateRouter element={<ProductUpdate />} requiredRole='ADMIN' />
+        }
+      />
+      <Route
         path='/order/manage'
         element={
           <PrivateRouter element={<ProductList />} requiredRole='ADMIN' />
@@ -41,7 +50,13 @@ const AppRouter = () => {
       <Route
         path='/member/manage'
         element={
-          <PrivateRouter element={<ProductList />} requiredRole='ADMIN' />
+          <PrivateRouter element={<MemberList />} requiredRole='ADMIN' />
+        }
+      />
+      <Route
+        path='/product/detail/:id'
+        element={
+          <PrivateRouter element={<ProductDetail />} requiredRole='ADMIN' />
         }
       />
     </Routes>

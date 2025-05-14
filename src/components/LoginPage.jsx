@@ -25,7 +25,6 @@ const LoginPage = () => {
       email,
       password,
     };
-    console.log(loginData);
 
     try {
       const res = await axios.post(`${API_BASE_URL}${USER}/doLogin`, loginData);
