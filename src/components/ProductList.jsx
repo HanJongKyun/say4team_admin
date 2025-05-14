@@ -196,23 +196,6 @@ const ProductList = ({ pageTitle }) => {
             </Grid>
           </form>
         </Grid>
-
-        <Grid item xs={12} md='auto'>
-          {!isAdmin ? (
-            <Button
-              onClick={handleAddToCart}
-              variant='outlined'
-              color='secondary'
-              sx={{ ml: 1 }}
-            >
-              장바구니에 담기
-            </Button>
-          ) : (
-            <Button href='/product/create' variant='contained' color='success'>
-              상품등록
-            </Button>
-          )}
-        </Grid>
       </Grid>
 
       <Card sx={{ p: 2 }}>
