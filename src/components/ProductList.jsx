@@ -196,6 +196,11 @@ const ProductList = ({ pageTitle }) => {
             </Grid>
           </form>
         </Grid>
+        <Grid item xs={12} md='auto'>
+          <Button href='/product/create' variant='contained' color='success'>
+            상품등록
+          </Button>
+        </Grid>
       </Grid>
 
       <Card sx={{ p: 2 }}>
