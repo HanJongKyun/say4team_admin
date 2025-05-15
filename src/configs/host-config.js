@@ -19,8 +19,7 @@ if (clientHostName === 'localhost') {
   'playdata-orderservice4908.s3-website.ap-northeast-2.amazonaws.com'
 ) {
   // 배포해서 현재 서비스 중
-  backendHostName =
-    'https://playdata-orderservice4908.s3-website.ap-northeast-2.amazonaws.com';
+  backendHostName = 'http://localhost:8000';
 }
 
 export const API_BASE_URL = backendHostName;
