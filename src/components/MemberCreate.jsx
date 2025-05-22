@@ -44,6 +44,8 @@ const MemberCreate = () => {
   }
 
   const memberCreate = async (e) => {
+    console.log('클릭이벤트 발생');
+
     e.preventDefault();
     if (password.length < 8) {
       alert('비밀번호 8자리 이상으로 작성해주세요!');
@@ -60,6 +62,7 @@ const MemberCreate = () => {
       phone,
     };
 
+    console.log('데이터 생성 완료');
     const res = await fetch(`${API_BASE_URL}${USER}/create?role=admin`, {
       method: 'POST',
       headers: {
@@ -67,7 +70,7 @@ const MemberCreate = () => {
       },
       body: JSON.stringify(registData),
     });
-
+    console.log('받아온 데이터', res);
     const data = await res.json();
     if (data.statusCode === 201) {
       alert(`${data.result}님 환영합니다!`);
