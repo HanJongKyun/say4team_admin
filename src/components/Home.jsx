@@ -29,7 +29,7 @@ const Home = () => {
 
         <Typography variant='h6' color='text.secondary' sx={{ mb: 4 }}>
           홈인테리어 쇼핑몰 <strong>saytouche</strong>에 오신 것을 진심으로
-          환영합니다.
+          환영합니다..
         </Typography>
 
         <Divider sx={{ my: 4 }} />
