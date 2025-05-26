@@ -1,4 +1,5 @@
 import {
+  Box,
   Button,
   Card,
   CardActions,
@@ -20,6 +21,7 @@ import dayjs from 'dayjs';
 import 'dayjs/locale/ko';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/material.css';
+import axios from 'axios';
 
 dayjs.locale('ko');
 
@@ -80,6 +82,28 @@ const MemberCreate = () => {
     }
   };
 
+  const sendVerificationEmail = async () => {
+    console.log('이메일 인증 버튼이 클릭됨!');
+    if (!email) {
+      alert('이메일을 먼저 입력해주세요!');
+      return;
+    }
+    const regEmail =
+      /^[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*@[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*\.[a-zA-Z]{2,3}$/i;
+
+    //정규 표현식 작성 후 변수에 대입해주면, 정규 표현식을 담은 객체로 저장이 됩니다.
+    //해당 정규표현식 객체는 test 메서드를 통해, 전달된 값이 정규표현식에 일치하는 값인지를 검증하는 로직을 제공.
+    if (!regEmail.test(email)) {
+      alert('올바른 이메일 형식이 아닙니다.');
+      return;
+    }
+
+    const res = await axios.post(`${API_BASE_URL}${USER}/email-valid`, {
+      // email: email, 로 써야 정석이지만 키밸류가 같을시 아래와 같이 기입가능
+      email,
+    });
+  };
+
   return (
     <Grid container justifyContent='center'>
       <Grid item xs={12} sm={8} md={6}>
@@ -87,15 +111,37 @@ const MemberCreate = () => {
           <CardHeader title='회원가입' style={{ textAlign: 'center' }} />
           <CardContent>
             <form onSubmit={memberCreate}>
-              <TextField
-                label='Email'
-                type='email'
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                fullWidth
-                margin='normal'
-                required
-              />
+              {/* 이메일 필드와 인증 버튼 */}
+              <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-end' }}>
+                <TextField
+                  label='Email'
+                  type='email'
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                  }}
+                  fullWidth
+                  margin='normal'
+                  required
+                  // sx={{
+                  //   '& .MuiInputBase-root': {
+                  //     backgroundColor: isEmailVerified ? '#f5f5f5' : 'inherit',
+                  //   },
+                  // }}
+                />
+                <Button
+                  variant='outlined'
+                  onClick={sendVerificationEmail}
+                  sx={{ mb: 1, minWidth: '100px' }}
+                >
+                  인증
+                  {/* {emailSendLoading
+                    ? '발송중...'
+                    : isEmailVerified
+                      ? '인증완료'
+                      : '인증'} */}
+                </Button>
+              </Box>
               <TextField
                 label='Password'
                 type='password'
