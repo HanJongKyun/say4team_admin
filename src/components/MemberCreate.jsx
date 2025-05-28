@@ -34,6 +34,13 @@ const MemberCreate = () => {
   // 생년월일 입력
   const [birthDate, setBirthDate] = useState(dayjs());
 
+  // 이메일 인증 관련 상태
+  const [verificationCode, setVerificationCode] = useState('');
+  const [isEmailSent, setIsEmailSent] = useState(false);
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
+  const [emailSendLoading, setEmailSendLoading] = useState(false);
+  const [verifyLoading, setVerifyLoading] = useState(false);
+
   // react router dom에서 제공하는 훅 useNavigate
   // 사용자가 특정 요소를 누르지 않아도 이벤트 등에서 페이지를 이동시킬 때 사용하는 훅
   // 리턴받은 함수를 통해 원하는 url을 문자열로 전달합니다.
@@ -44,6 +51,47 @@ const MemberCreate = () => {
     alert('여기 왜왔죠??');
     navigate('/', replace);
   }
+
+  const verifyEmailCode = async () => {
+    if (!verificationCode) {
+      alert('인증 코드를 입력해주세요.');
+      return;
+    }
+
+    setVerifyLoading(true);
+    try {
+      const res = await axios.post(`${API_BASE_URL}${USER}/verify`, {
+        email,
+        code: verificationCode,
+      });
+
+      console.log('응답된 데이터: ', res.data);
+
+      setIsEmailVerified(true);
+      alert('이메일 인증이 완료되었습니다.');
+    } catch (error) {
+      console.error('인증 확인 오류', error);
+      const msg = error.response.data.statusMessage;
+      if (msg === '인증 코드가 만료 되었습니다.') {
+        alert('인증시간 만료되었습니다. 인증번호를 다시 발급 해주세요.');
+      } else if (msg.indexOf('인증번호를 잘못 입력하셨습니다.') !== -1) {
+        alert(
+          `인증 코드가 올바르지 않습니다! , 남은 횟수 : ${msg.split(', ').get(1)}`,
+        );
+      } else if (
+        msg ===
+        '잘못된 요청 횟수가 과다하여 임시 차단 중입니다. 잠시 후에 시도해주세요.'
+      ) {
+        alert(
+          '잘못된 요청 횟수가 과다하여 임시 차단 중입니다. 잠시 후에 시도해주세요.',
+        );
+      } else {
+        alert('관리자에게 문의하세요!');
+      }
+    } finally {
+      setVerifyLoading(false);
+    }
+  };
 
   const memberCreate = async (e) => {
     console.log('클릭이벤트 발생');
@@ -97,11 +145,31 @@ const MemberCreate = () => {
       alert('올바른 이메일 형식이 아닙니다.');
       return;
     }
+    setEmailSendLoading(true); //이메일 전송직전 로딩상태
+    try {
+      const res = await axios.post(`${API_BASE_URL}${USER}/email-valid`, {
+        // email: email, 로 써야 정석이지만 키밸류가 같을시 아래와 같이 기입가능
+        email,
+      });
 
-    const res = await axios.post(`${API_BASE_URL}${USER}/email-valid`, {
-      // email: email, 로 써야 정석이지만 키밸류가 같을시 아래와 같이 기입가능
-      email,
-    });
+      console.log('응답된 결과: ', res.data);
+
+      setIsEmailSent(true); // 이메일 송신여부 설정
+      alert('인증 코드가 이메일로 발송되었습니다.');
+    } catch (error) {
+      console.error('이메일 발송 오류 : ', error);
+      if (
+        error.response.data.statusMessage ===
+        '잘못된 요청 횟수가 과다하여 임시 차단 중입니다. 잠시 후에 시도해주세요.'
+      ) {
+        alert(
+          '잘못된 요청 횟수가 과다하여 임시 차단 중입니다. 잠시 후에 시도해주세요.',
+        );
+      }
+      alert('인증 이메일 발송 중 오류 발생!');
+    } finally {
+      setEmailSendLoading(false); // 전송 되든 에러가 나든 로딩이 끝났음을 알려주자.
+    }
   };
 
   return (
@@ -119,6 +187,11 @@ const MemberCreate = () => {
                   value={email}
                   onChange={(e) => {
                     setEmail(e.target.value);
+                    // 이메일이 변경되면 인증상태 초기화
+                    if (isEmailSent || isEmailVerified) {
+                      setIsEmailSent(false);
+                      setIsEmailVerified(false);
+                    }
                   }}
                   fullWidth
                   margin='normal'
@@ -134,14 +207,34 @@ const MemberCreate = () => {
                   onClick={sendVerificationEmail}
                   sx={{ mb: 1, minWidth: '100px' }}
                 >
-                  인증
-                  {/* {emailSendLoading
+                  {emailSendLoading
                     ? '발송중...'
                     : isEmailVerified
                       ? '인증완료'
-                      : '인증'} */}
+                      : '인증'}
                 </Button>
               </Box>
+              {/* 인증 코드 입력 필드 */}
+              {isEmailSent && !isEmailVerified && (
+                <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-end' }}>
+                  <TextField
+                    label='인증 코드'
+                    value={verificationCode}
+                    onChange={(e) => setVerificationCode(e.target.value)}
+                    fullWidth
+                    margin='normal'
+                    placeholder='이메일로 받은 인증 코드를 입력하세요'
+                  />
+                  <Button
+                    variant='outlined'
+                    onClick={verifyEmailCode}
+                    disabled={!verificationCode || verifyLoading}
+                    sx={{ mb: 1, minWidth: '100px' }}
+                  >
+                    {verifyLoading ? '확인중...' : '확인'}
+                  </Button>
+                </Box>
+              )}
               <TextField
                 label='Password'
                 type='password'
@@ -200,8 +293,9 @@ const MemberCreate = () => {
                   color='primary'
                   variant='contained'
                   fullWidth
+                  disabled={!isEmailVerified}
                 >
-                  등록
+                  회원가입
                 </Button>
               </CardActions>
             </form>

@@ -25,7 +25,7 @@ Axios Interceptor는 요청 또는 응답이 처리되기 전에 실행되는 �
 axiosInstance.interceptors.request.use(
   (config) => {
     // 요청 보내기 전에 항상 처리해야 할 내용을 콜백으로 전달.
-    const token = localStorage.getItem('ACCESS_TOKEN');
+    const token = sessionStorage.getItem('ACCESS_TOKEN');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -63,7 +63,7 @@ axiosInstance.interceptors.response.use(
           id,
         });
         const newToken = res.data.result.token; // axios는 json() 안씁니다.
-        localStorage.setItem('ACCESS_TOKEN', newToken); // 동일한 이름으로 토큰 담기 (덮어씀)
+        sessionStorage.setItem('ACCESS_TOKEN', newToken); // 동일한 이름으로 토큰 담기 (덮어씀)
 
         // 실패한 원본 요청 정보에서 Authorization의 값을 새 토큰으로 갈아 끼우자
         originalRequest.headers.Authorization = `Bearer ${newToken}`;

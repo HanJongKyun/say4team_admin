@@ -20,9 +20,13 @@ export const AuthContextProvider = (props) => {
     console.log(loginData);
 
     // 백엔드가 응답한 JSON 인증 정보를 클라이언트쪽에 보관하자.
-    localStorage.setItem('ACCESS_TOKEN', loginData.token);
-    localStorage.setItem('USER_ID', loginData.id);
-    localStorage.setItem('USER_ROLE', loginData.role);
+    sessionStorage.setItem('ACCESS_TOKEN', loginData.token);
+    sessionStorage.setItem('USER_ID', loginData.id);
+    sessionStorage.setItem('USER_ROLE', loginData.role);
+
+    if (loginData.provider) {
+      sessionStorage.setItem('PROVIDER', loginData.provider);
+    }
 
     setIsLoggedIn(true);
     setUserRole(loginData.role);
