@@ -41,9 +41,9 @@ export const AuthContextProvider = (props) => {
 
   // 첫 렌더링 시에 이전 로그인 정보를 확인해서 로그인 상태 유지 시키기.
   useEffect(() => {
-    if (localStorage.getItem('ACCESS_TOKEN')) {
+    if (sessionStorage.getItem('ACCESS_TOKEN')) {
       setIsLoggedIn(true);
-      setUserRole(localStorage.getItem('USER_ROLE'));
+      setUserRole(sessionStorage.getItem('USER_ROLE'));
     }
     setIsInit(true);
   }, []);
