@@ -8,7 +8,7 @@ import MyPage from '../components/MyPage';
 import ProductCreate from '../components/ProductCreate';
 import PrivateRouter from './PrivateRouter';
 import { Route, Routes } from 'react-router-dom';
-import ProductDetail from '../components/\bProductDetail';
+import ProductDetail from '../components/ProductDetail';
 import ProductUpdate from '../components/ProductUpdate';
 import MemberList from '../components/MemberList';
 
