@@ -1,0 +1,68 @@
+.admin-order-page {
+  padding: 40px;
+  max-width: 1000px;
+  margin: auto;
+  font-family: 'Arial', sans-serif;
+}
+
+h2 {
+  text-align: center;
+  margin-bottom: 30px;
+  font-size: 28px;
+}
+
+.sort-controls {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 30px;
+  gap: 16px;
+}
+
+.sort-controls button {
+  padding: 10px 20px;
+  border: 1px solid #aaa;
+  background-color: #f9f9f9;
+  cursor: pointer;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: bold;
+  transition: all 0.2s;
+}
+
+.sort-controls button.active {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.order-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  align-items: center; /* 가운데 정렬 */
+}
+
+.order-card {
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  padding: 24px;
+  background-color: #fff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+  font-size: 16px;
+  line-height: 1.6;
+
+  width: 50vw;      /* 화면 너비의 1.5배 */
+  min-height: 300px;
+  box-sizing: border-box;
+}
+
+.order-card > div {
+  margin-bottom: 12px;
+}
+
+.selectlist {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 15px;
+}

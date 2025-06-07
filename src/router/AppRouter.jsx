@@ -11,6 +11,7 @@ import { Route, Routes } from 'react-router-dom';
 import ProductDetail from '../components/ProductDetail';
 import ProductUpdate from '../components/ProductUpdate';
 import MemberList from '../components/MemberList';
+import OrderList from '../components/OrderList';
 
 const AppRouter = () => {
   return (
@@ -44,7 +45,7 @@ const AppRouter = () => {
       <Route
         path='/order/manage'
         element={
-          <PrivateRouter element={<ProductList />} requiredRole='ADMIN' />
+          <PrivateRouter element={<OrderList />} requiredRole='ADMIN' />
         }
       />
       <Route
