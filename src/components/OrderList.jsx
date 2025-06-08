@@ -64,7 +64,6 @@ const OrderList = () => {
       });
 
       const newOrders = response.data;
-      console.log('새로 받은 주문 데이터:', newOrders);
 
       if (!newOrders || newOrders.length === 0) {
         setHasMore(false);
@@ -115,26 +114,27 @@ const OrderList = () => {
   }, [page, hasMore, fetchOrders]);
 
   const handleStatusChange = async (orderId, newStatus) => {
-  const confirmChange = window.confirm(`주문 상태를 "${getOrderStatusLabel(newStatus)}"로 변경하시겠습니까?`);
-  if (!confirmChange) return;
-
-  try {
-    const url = `${API_BASE_URL}${ORDER}/${orderId}/status`;
-    await axiosInstance.put(url, null, {
-      params: { status: newStatus },
-    });
-
-    setOrders((prev) =>
-      prev.map((order) =>
-        order.orderId === orderId ? { ...order, orderStatus: newStatus } : order,
-      ),
+    const confirmChange = window.confirm(
+      `주문 상태를 "${getOrderStatusLabel(newStatus)}"로 변경하시겠습니까?`,
     );
-  } catch (err) {
-    console.error('상태 변경 실패:', err);
-    alert('상태 변경에 실패했습니다. 다시 시도해주세요.');
-  }
-};
+    if (!confirmChange) return;
 
+    try {
+      const url = `${API_BASE_URL}${ORDER}/${orderId}/status`;
+      await axiosInstance.put(url, null, {
+        params: { status: newStatus },
+      });
+
+      setOrders((prev) =>
+        prev.map((order) =>
+          order.orderId === orderId ? { ...order, orderStatus: newStatus } : order,
+        ),
+      );
+    } catch (err) {
+      console.error('상태 변경 실패:', err);
+      alert('상태 변경에 실패했습니다. 다시 시도해주세요.');
+    }
+  };
 
   return (
     <div className="admin-order-page">
@@ -157,82 +157,68 @@ const OrderList = () => {
 
       <div className="order-list">
         {orders.length === 0 && <p>주문 내역이 없습니다.</p>}
-        {orders.map((order) => {
-          const firstItem = order.orderItems?.[0];
-          const imageUrl = firstItem?.mainImagePath;
 
-          // 주문 날짜를 order.orderedAt 기준으로 포맷
-          const orderDate = order.orderedAt
-            ? new Date(order.orderedAt).toLocaleDateString()
-            : '알 수 없음';
+        {orders.flatMap((order) =>
+          order.orderItems.map((item, index) => {
+            const imageUrl = item.mainImagePath;
+            const orderDate = order.orderedAt
+              ? new Date(order.orderedAt).toLocaleDateString()
+              : '알 수 없음';
 
-          // 총 금액 계산
-          const totalPrice = order.orderItems
-            ? order.orderItems.reduce(
-                (acc, item) => acc + item.unitPrice * item.quantity,
-                0,
-              )
-            : 0;
-
-          return (
-            <div key={order.orderId} className="order-card">
-              <div><b>주문 ID:</b> {order.orderId}</div>
-              <div><b>사용자:</b> {order.email || '알 수 없음'}</div>
-              <div>
-                <strong>주문 날짜:</strong>{' '}
-                {orderDate}
-              </div>
-              <div><b>총 금액:</b> {totalPrice.toLocaleString()}원</div>
-
-              <div className="product-info-container">
-                <div className="product-image-wrapper">
-                  {imageUrl ? (
-                    <img
-                      src={imageUrl}
-                      alt={firstItem?.productName || '상품 이미지'}
-                      className="order-image"
-                    />
-                  ) : (
-                    <img
-                      src="/default-image.png"
-                      alt="기본 이미지"
-                      className="order-image"
-                    />
-                  )}
+            return (
+              <div key={`${order.orderId}-${index}`} className="order-card">
+                <div><b>주문 ID:</b> {order.orderId}</div>
+                <div><b>사용자:</b> {order.email || '알 수 없음'}</div>
+                <div><strong>주문 날짜:</strong> {orderDate}</div>
+                <div>
+                  <b>총 금액:</b>{' '}
+                  {(item.unitPrice * item.quantity).toLocaleString()}원
                 </div>
 
-                <div className="product-details">
-                  <div><b>상품명:</b> {firstItem?.productName || '상품 정보 없음'}</div>
-                  <div>
-                    <b>수량:</b>{' '}
-                    {order.orderItems
-                      ? order.orderItems.reduce((acc, item) => acc + item.quantity, 0)
-                      : 0}
+                <div className="product-info-container">
+                  <div className="product-image-wrapper">
+                    {imageUrl ? (
+                      <img
+                        src={imageUrl}
+                        alt={item.productName || '상품 이미지'}
+                        className="order-image"
+                      />
+                    ) : (
+                      <img
+                        src="/default-image.png"
+                        alt="기본 이미지"
+                        className="order-image"
+                      />
+                    )}
                   </div>
-                  <div>
-                    <b>단가:</b>{' '}
-                    {firstItem ? firstItem.unitPrice.toLocaleString() + '원' : '-'}
+
+                  <div className="product-details">
+                    <div><b>상품명:</b> {item.productName || '상품 정보 없음'}</div>
+                    <div><b>수량:</b> {item.quantity}</div>
+                    <div><b>단가:</b> {item.unitPrice.toLocaleString()}원</div>
                   </div>
                 </div>
-              </div>
 
-              <label>
-                <b>상태:</b>{' '}
-                <select
-                  value={order.orderStatus || '----'}
-                  onChange={(e) => handleStatusChange(order.orderId, e.target.value)}
-                  className="selectlist"
-                >
-                  {ORDER_STATUSES.map((status) => (
-                    <option key={status} value={status}>
-                      {getOrderStatusLabel(status)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-          );
-        })}
+                <label>
+                  <b>상태:</b>{' '}
+                  <select
+                    value={order.orderStatus || '----'}
+                    onChange={(e) =>
+                      handleStatusChange(order.orderId, e.target.value)
+                    }
+                    className="selectlist"
+                  >
+                    {ORDER_STATUSES.map((status) => (
+                      <option key={status} value={status}>
+                        {getOrderStatusLabel(status)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            );
+          }),
+        )}
       </div>
 
       <div ref={observerRef} style={{ height: '1px' }}></div>
