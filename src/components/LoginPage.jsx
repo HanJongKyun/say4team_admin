@@ -62,7 +62,7 @@ const LoginPage = () => {
       navigate('/');
     } catch (error) {
       console.log(error); // 백엔드 데이터 :  e.response.data
-      alert('로그인 실패. 아이디나 비번확인하세요.');
+      alert('로그인 실패. 아이디나 비밀번호를 확인하세요.');
     }
   };
   //구글 로그인 처리

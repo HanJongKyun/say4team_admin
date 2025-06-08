@@ -25,5 +25,5 @@ if (clientHostName === 'localhost') {
 export const API_BASE_URL = backendHostName;
 export const USER = '/user-service/user';
 export const PROD = '/product-service/product';
-export const ORDER = '/ordering-service/order';
+export const ORDER = '/ordering-service/orders';
 export const SSE = '/ordering-service';
