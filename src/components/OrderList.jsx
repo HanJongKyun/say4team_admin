@@ -85,7 +85,8 @@ const OrderList = () => {
   }, []);
 
   useEffect(() => {
-    if (!observerRef.current) return;
+    const currentObserverTarget = observerRef.current;
+    if (!currentObserverTarget) return;
 
     const observer = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting) {
@@ -93,10 +94,10 @@ const OrderList = () => {
       }
     });
 
-    observer.observe(observerRef.current);
+    observer.observe(currentObserverTarget);
 
     return () => {
-      if (observerRef.current) observer.unobserve(observerRef.current);
+      if (currentObserverTarget) observer.unobserve(currentObserverTarget);
       observer.disconnect();
     };
   }, [fetchOrders]);
