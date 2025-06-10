@@ -58,7 +58,7 @@ const OrderList = () => {
     fetchingRef.current = true;
 
     try {
-      const url = `${API_BASE_URL}${ORDER}/admin/all`;
+      const url = `${API_BASE_URL}${ORDER}/admin/all`; // 관리자용: 전체 사용자 주문 전체 조회
       const response = await axiosInstance.get(url, {
         params: { page: pageRef.current, sort: sortRef.current },
       });
@@ -123,7 +123,7 @@ const OrderList = () => {
     if (!confirmChange) return;
 
     try {
-      const url = `${API_BASE_URL}${ORDER}/items/${orderItemId}/status`;
+      const url = `${API_BASE_URL}${ORDER}/items/${orderItemId}/status`; // 개별 상품 관리 전용 기능
       await axiosInstance.put(url, null, {
         params: { status: newStatus },
       });

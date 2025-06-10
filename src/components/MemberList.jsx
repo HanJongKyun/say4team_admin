@@ -16,7 +16,6 @@ import axiosInstance from '../configs/axios-config';
 import { useNavigate } from 'react-router-dom';
 import { handleAxiosError } from '../configs/HandleAxiosError';
 import { API_BASE_URL, USER } from '../configs/host-config';
-import OrderListComponent from './OrderListComponent';
 
 const MemberList = () => {
   const [memberInfoList, setMemberInfoList] = useState([]);
