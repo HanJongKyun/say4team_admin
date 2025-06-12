@@ -17,29 +17,29 @@ const Header = () => {
   const { isLoggedIn, onLogout, userRole } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    console.log('role: ', userRole);
-    const token = sessionStorage.getItem('ACCESS_TOKEN');
+  // useEffect(() => {
+  //   console.log('role: ', userRole);
+  //   const token = sessionStorage.getItem('ACCESS_TOKEN');
 
-    if (userRole === 'ADMIN') {
-      // 알림을 받기 위해 서버와 연결을 하기 위한 요청을 하겠다.
-      // 기존에 사용하던 fetch, axios는 지속적 연결을 지원하지 않는다.
-      const sse = new EventSourcePolyfill(`${API_BASE_URL}${SSE}/subscribe`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+  //   if (userRole === 'ADMIN') {
+  //     // 알림을 받기 위해 서버와 연결을 하기 위한 요청을 하겠다.
+  //     // 기존에 사용하던 fetch, axios는 지속적 연결을 지원하지 않는다.
+  //     const sse = new EventSourcePolyfill(`${API_BASE_URL}${SSE}/subscribe`, {
+  //       headers: {
+  //         Authorization: `Bearer ${token}`,
+  //       },
+  //     });
 
-      sse.addEventListener('connect', (event) => {
-        console.log(event);
-      });
+  //     sse.addEventListener('connect', (event) => {
+  //       console.log(event);
+  //     });
 
-      // 30초마다 발생하는 알림. (연결을 유지하기 위해)
-      sse.addEventListener('heartbeat', () => {
-        console.log('Received heartbeat');
-      });
-    }
-  }, [userRole]);
+  //     // 30초마다 발생하는 알림. (연결을 유지하기 위해)
+  //     sse.addEventListener('heartbeat', () => {
+  //       console.log('Received heartbeat');
+  //     });
+  //   }
+  // }, [userRole]);
 
   const handleLogout = () => {
     onLogout();
@@ -73,6 +73,13 @@ const Header = () => {
                   </Button>
                   <Button color='inherit' component={Link} to='/product/manage'>
                     상품관리
+                  </Button>
+                  <Button
+                    color='inherit'
+                    component={Link}
+                    to='/category/manage'
+                  >
+                    카테고리 관리
                   </Button>
                 </>
               )}
