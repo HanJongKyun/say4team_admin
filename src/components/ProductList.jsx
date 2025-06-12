@@ -14,14 +14,16 @@ import {
   TableRow,
   TextField,
   Typography,
+  InputLabel,
+  FormControl,
 } from '@mui/material';
 import React, { useContext, useEffect, useState } from 'react';
 import AuthContext from '../context/UserContext';
 import CartContext from '../context/CartContext';
-import { replace, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import axiosInstance from '../configs/axios-config';
 import { throttle } from 'lodash';
-import { API_BASE_URL, PROD } from '../configs/host-config';
+import { API_BASE_URL, PROD, CATEGORY } from '../configs/host-config';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 
 const ProductList = ({ pageTitle }) => {
@@ -29,27 +31,45 @@ const ProductList = ({ pageTitle }) => {
   const { isLoggedIn } = useContext(AuthContext);
   if (!isLoggedIn) {
     alert('로그인하세요');
-    navigate('/', replace); // ← 이렇게 써야 함!
+    navigate('/', { replace: true });
+    return null;
   }
 
-  const [searchType, setSearchType] = useState('ALL');
-  const [searchValue, setSearchValue] = useState('');
+  // --- 상태 변수 정의 ---
+  const [searchType, setSearchType] = useState('ALL'); // 'ALL' 또는 categoryId
+  const [searchValue, setSearchValue] = useState(''); // 검색어 (항상 사용)
+
   const [productList, setProductList] = useState([]);
-  const [showScrollTop, setShowScrollTop] = useState(false);
-  const [currentPage, setCurrentPage] = useState(0); // 현재 페이지를 나타내는 변수
+  const [currentPage, setCurrentPage] = useState(0); // 현재 페이지
   const [isLastPage, setLastPage] = useState(false); // 마지막 페이지 여부
-  // 현재 로딩중이냐? -> 백엔드로부터 상품 목록 요청을 보내서 아직 데이터를 받아오는 중인가?
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); // 데이터 로딩 중 여부
   const pageSize = 15;
+
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  const [categoriesForFilter, setCategoriesForFilter] = useState([]);
+  const [loadingCategoriesForFilter, setLoadingCategoriesForFilter] =
+    useState(true);
+  const [errorCategoriesForFilter, setErrorCategoriesForFilter] =
+    useState(null);
 
   const { userRole } = useContext(AuthContext);
   const isAdmin = userRole === 'ADMIN';
 
+  const [selected, setSelected] = useState({});
+
+  const handleCheckboxChange = (productId, isChecked) => {
+    setSelected((prevSelected) => ({
+      ...prevSelected,
+      [productId]: isChecked,
+    }));
+  };
+
+  // --- 스크롤 상단 이동 버튼 관련 이펙트 ---
   useEffect(() => {
     const handleScroll = () => {
       setShowScrollTop(window.scrollY > 300);
     };
-
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
@@ -58,83 +78,162 @@ const ProductList = ({ pageTitle }) => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // --- 카테고리 목록을 백엔드에 요청하는 함수 (검색 필터용) ---
   useEffect(() => {
-    loadProduct(); // 처음 화면에 진입하면 1페이지 내용을 불러오자. (매개값은 필요 없음)
-    // 쓰로틀링: 짧은 시간동안 연속해서 발생한 이벤트들을 일정 시간으로 그룹화 하여
-    // 순차적으로 적용할 수 있게 하는 기법 -> 스크롤 페이징
-    // 디바운싱: 짧은 시간동안 연속해서 발생한 이벤트를 호출하지 않다가 마지막 이벤트로부터
-    // 일정 시간 이후에 한번만 호출하게 하는 기능. -> 입력값 검증
-    const throttledScroll = throttle(scrollPagination, 1000);
-    window.addEventListener('scroll', throttledScroll);
-
-    // 클린업 함수: 다른 컴포넌트가 렌더링 될 때 이벤트 해제
-    return () => window.removeEventListener('scroll', throttledScroll);
+    const fetchCategoriesForFilter = async () => {
+      console.log('[ProductList] 카테고리 목록 요청 시작...');
+      try {
+        const res = await axiosInstance.get(
+          `${API_BASE_URL}${CATEGORY}/list?sort=categoryId,ASC`,
+        );
+        console.log('[ProductList] 카테고리 목록 응답 데이터:', res.data);
+        setCategoriesForFilter(res.data);
+        setLoadingCategoriesForFilter(false);
+        console.log('[ProductList] 카테고리 로딩 상태 -> false');
+      } catch (e) {
+        console.error('[ProductList] 카테고리 불러오기 실패:', e);
+        setErrorCategoriesForFilter('카테고리 목록을 불러오는데 실패했습니다.');
+        setLoadingCategoriesForFilter(false);
+        console.log('[ProductList] 카테고리 로딩 상태 -> false (에러 발생)');
+      }
+    };
+    fetchCategoriesForFilter();
   }, []);
 
-  useEffect(() => {
-    // useEffect는 하나의 컴포넌트에서 여러 개 선언이 가능.
-    // 스크롤 이벤트에서 다음 페이지 번호를 준비했고,
-    // 상태가 바뀌면 그 때 백엔드로 요청을 보낼 수 있게 로직을 나누었습니다.
-    if (currentPage > 0) loadProduct();
-  }, [currentPage]);
+  // --- 상품 목록을 백엔드에 요청하는 핵심 함수 ---
+  // searchTypeParam과 searchValueParam을 직접 받도록 수정
+  // isInitialOrSearch: true이면 기존 목록을 초기화하고 첫 페이지를 로드 (검색/초기 로드용)
+  //                    false이면 기존 목록에 다음 페이지를 추가 (스크롤 페이징용)
+  const loadProduct = async (
+    searchTypeParam,
+    searchValueParam,
+    pageNum,
+    isInitialOrSearch = false,
+  ) => {
+    // 이미 로딩 중이고, 초기/검색 로드가 아닐 때 (즉, 스크롤 페이징 중) 중단
+    if (isLoading && !isInitialOrSearch) {
+      console.log('[ProductList] 이미 로딩 중이므로 추가 요청 중단.');
+      return;
+    }
+    // 마지막 페이지인데, 초기/검색 로드가 아닐 때 (즉, 스크롤 페이징 중) 중단
+    if (isLastPage && !isInitialOrSearch) {
+      console.log('[ProductList] 마지막 페이지이므로 추가 요청 중단.');
+      return;
+    }
 
-  // 상품 목록을 백엔드에 요청하는 함수
-  const loadProduct = async () => {
-    // 아직 로딩 중이라면 or 이미 마지막 페이지라면 더이상 진행하지 말어라.
-    if (isLoading || isLastPage) return;
-
-    console.log('아직 보여줄 컨텐트 더 있음!');
+    console.log('[ProductList] 상품 목록 로드 요청 시작!');
 
     const params = {
       size: pageSize,
-      page: currentPage,
+      page: pageNum, // 전달받은 페이지 번호 사용
     };
 
-    params.searchType = searchType;
-    params.searchName = searchValue;
+    // searchTypeParam과 searchValueParam을 직접 사용
+    if (searchTypeParam !== 'ALL') {
+      params.searchType = searchTypeParam;
+    }
+    if (searchValueParam.trim() !== '') {
+      params.searchName = searchValueParam.trim();
+    }
 
-    console.log('백엔드로 보낼 params: ', params);
+    console.log('[ProductList] 백엔드로 보낼 최종 params: ', params);
 
-    setIsLoading(true); // 요청 보내기 바로 직전에 로딩 상태 true 만들기
+    setIsLoading(true);
+    console.log('[ProductList] 상품 로딩 상태 -> true');
 
     try {
-      const res = await axios.get(
+      const res = await axiosInstance.get(
         `${API_BASE_URL}${PROD}/list?sort=productId,DESC`,
-        {
-          params,
-        },
+        { params },
       );
-      const data = await res.data;
-      console.log('result.length: ', data.result.length);
+      const data = res.data;
+      console.log('[ProductList] 상품 목록 응답 데이터:', data);
 
       if (data.result.length === 0) {
         setLastPage(true);
+        if (isInitialOrSearch) {
+          setProductList([]);
+          console.log(
+            '[ProductList] 검색 결과 없음. 목록 비우고 마지막 페이지로 설정.',
+          );
+        } else {
+          console.log(
+            '[ProductList] 다음 페이지에 데이터 없음. 마지막 페이지로 설정.',
+          );
+        }
       } else {
-        // 백엔드로부터 전달받은 상품 목록을 상태 변수에 세팅.
-        setProductList((prevList) => [...prevList, ...data.result]);
+        setProductList((prevList) => {
+          const newItems = data.result.filter(
+            (newItem) =>
+              !prevList.some((existingItem) => existingItem.id === newItem.id),
+          );
+          return isInitialOrSearch ? newItems : [...prevList, ...newItems];
+        });
+        setLastPage(false);
+        console.log('[ProductList] 상품 목록 업데이트 완료.');
       }
     } catch (e) {
-      console.log(e);
+      console.error('[ProductList] 상품 로드 중 에러 발생:', e);
+      setErrorCategoriesForFilter('상품 목록을 불러오는데 실패했습니다.');
+      setLastPage(true);
     } finally {
-      // 요청에 대한 응답 처리가 끝나고 난 후 로딩 상태를 다시 false로
       setIsLoading(false);
+      console.log('[ProductList] 상품 로딩 상태 -> false (요청 완료)');
     }
   };
 
+  // --- 컴포넌트 마운트 시 첫 페이지 로드 ---
+  // (searchType, searchValue는 초기값 'ALL', ''으로 로드)
+  useEffect(() => {
+    loadProduct(searchType, searchValue, 0, true); // 초기 로드
+  }, []);
+
+  // --- 스크롤 페이징 처리 함수 ---
+  useEffect(() => {
+    const throttledScroll = throttle(scrollPagination, 1000);
+    window.addEventListener('scroll', throttledScroll);
+    return () => window.removeEventListener('scroll', throttledScroll);
+  }, []);
+
   const scrollPagination = () => {
-    // 브라우저 창의 높이 + 현재 페이지에서 스크롤 된 픽셀 값
-    //>= (스크롤이 필요 없는)페이지 전체 높이에서 100px 이내에 도달했는가?
     const isBottom =
       window.innerHeight + document.documentElement.scrollTop >=
       document.documentElement.scrollHeight - 100;
     if (isBottom && !isLastPage && !isLoading) {
-      // 스크롤이 특정 구간에 도달하면 바로 요청 보내는 게 아니라 다음 페이지 번호를 준비하겠다.
       setCurrentPage((prevPage) => prevPage + 1);
+      console.log('[ProductList] 스크롤 페이징: 다음 페이지 요청 준비');
     }
   };
 
+  // --- currentPage 변경 시 다음 페이지 로드 (스크롤 페이징 전용) ---
+  useEffect(() => {
+    if (currentPage > 0) {
+      console.log(
+        `[ProductList] currentPage 변경 감지: 페이지 ${currentPage} 로드`,
+      );
+      loadProduct(searchType, searchValue, currentPage, false); // 기존 목록에 추가
+    }
+  }, [currentPage]); // currentPage가 변경될 때만 실행
+
   const handleProductClick = (productId) => {
     navigate(`/product/detail/${productId}`);
+  };
+
+  // --- 검색 버튼 클릭 핸들러 ---
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    console.log('[ProductList] 검색 버튼 클릭!');
+    console.log(
+      `  클릭 시 searchType: ${searchType}, searchValue: ${searchValue}`,
+    );
+
+    setProductList([]); // 목록 초기화
+    setCurrentPage(0); // 페이지 0으로 리셋
+    setLastPage(false); // 마지막 페이지 상태 초기화
+    setIsLoading(false); // 로딩 상태 초기화
+
+    // 현재 searchType과 searchValue 상태 값을 직접 loadProduct에 전달
+    loadProduct(searchType, searchValue, 0, true); // 검색 시 즉시 최신 값으로 로드
   };
 
   return (
@@ -147,37 +246,43 @@ const ProductList = ({ pageTitle }) => {
         sx={{ mb: 4 }}
       >
         <Grid item xs={12} md={8}>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              setProductList([]);
-              setCurrentPage(0);
-              setIsLoading(false);
-              setLastPage(false);
-              loadProduct();
-            }}
-          >
+          <form onSubmit={handleSearchSubmit}>
             <Grid container spacing={2} alignItems='center'>
               <Grid item>
-                <Select
+                <TextField
+                  select
+                  label={
+                    <React.Fragment>
+                      카테고리 <span style={{ color: 'red' }}>*</span>
+                    </React.Fragment>
+                  }
                   value={searchType}
-                  onChange={(e) => setSearchType(e.target.value)}
-                  displayEmpty
-                  size='small' // ← 이거 중요!
-                  sx={{ minWidth: 140, height: 40, fontSize: 14 }} // ← 텍스트 크기 & 높이 정렬
+                  onChange={(e) => {
+                    setSearchType(e.target.value);
+                    // searchType 변경 시 searchValue는 유지
+                  }}
+                  size='small'
+                  sx={{ minWidth: 140, height: 40, fontSize: 14 }}
+                  disabled={loadingCategoriesForFilter}
+                  error={!!errorCategoriesForFilter}
+                  helperText={errorCategoriesForFilter}
                 >
                   <MenuItem value='ALL'>전체</MenuItem>
-                  {/* 카테고리 */}
-                  <MenuItem value='1'>Doodle Persian</MenuItem>
-                  <MenuItem value='2'>É</MenuItem>
-                  <MenuItem value='3'>Textiles</MenuItem>
-                  <MenuItem value='4'>Homedeco</MenuItem>
-                  <MenuItem value='5'>Mirror</MenuItem>
-                  <MenuItem value='6'>Lighting</MenuItem>
-                  <MenuItem value='7'>Lifestyle</MenuItem>
-                  <MenuItem value='8'>Goods</MenuItem>
-                  <MenuItem value='9'>dummy</MenuItem>
-                </Select>
+                  {loadingCategoriesForFilter ? (
+                    <MenuItem disabled>로딩 중...</MenuItem>
+                  ) : errorCategoriesForFilter ? (
+                    <MenuItem disabled>{errorCategoriesForFilter}</MenuItem>
+                  ) : (
+                    categoriesForFilter.map((category) => (
+                      <MenuItem
+                        key={category.categoryId}
+                        value={category.categoryId}
+                      >
+                        {category.categoryName}
+                      </MenuItem>
+                    ))
+                  )}
+                </TextField>
               </Grid>
               <Grid item>
                 <TextField
@@ -196,11 +301,13 @@ const ProductList = ({ pageTitle }) => {
             </Grid>
           </form>
         </Grid>
-        <Grid item xs={12} md='auto'>
-          <Button href='/product/create' variant='contained' color='success'>
-            상품등록
-          </Button>
-        </Grid>
+        {isAdmin && (
+          <Grid item xs={12} md='auto'>
+            <Button href='/product/create' variant='contained' color='success'>
+              상품등록
+            </Button>
+          </Grid>
+        )}
       </Grid>
 
       <Card sx={{ p: 2 }}>
@@ -224,59 +331,70 @@ const ProductList = ({ pageTitle }) => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {productList.map((product) => (
-                <TableRow
-                  key={product.id}
-                  hover
-                  sx={{ cursor: 'pointer' }}
-                  onClick={() => handleProductClick(product.id)}
-                >
-                  <TableCell>
-                    <img
-                      src={product.thumbnailPath}
-                      alt={product.name}
-                      style={{
-                        height: '100px',
-                        width: 'auto',
-                        borderRadius: '8px',
-                        objectFit: 'cover',
-                      }}
-                    />
+              {productList.length > 0 ? (
+                productList.map((product) => (
+                  <TableRow
+                    key={product.id}
+                    hover
+                    sx={{ cursor: 'pointer' }}
+                    onClick={() => handleProductClick(product.id)}
+                  >
+                    <TableCell>
+                      <img
+                        src={product.thumbnailPath}
+                        alt={product.name}
+                        style={{
+                          height: '100px',
+                          width: 'auto',
+                          borderRadius: '8px',
+                          objectFit: 'cover',
+                        }}
+                      />
+                    </TableCell>
+                    <TableCell>{product.name}</TableCell>
+                    <TableCell>{product.price.toLocaleString()}원</TableCell>
+                    <TableCell>{product.stockQuantity}</TableCell>
+                    {!isAdmin && (
+                      <TableCell>
+                        <TextField
+                          type='number'
+                          value={product.quantity || 0}
+                          size='small'
+                          onChange={(e) =>
+                            setProductList((prevList) =>
+                              prevList.map((p) =>
+                                p.id === product.id
+                                  ? { ...p, quantity: parseInt(e.target.value) }
+                                  : p,
+                              ),
+                            )
+                          }
+                          sx={{ width: 80 }}
+                          inputProps={{ min: 0 }}
+                        />
+                      </TableCell>
+                    )}
+                    {!isAdmin && (
+                      <TableCell>
+                        <Checkbox
+                          checked={!!selected[product.id]}
+                          onChange={(e) =>
+                            handleCheckboxChange(product.id, e.target.checked)
+                          }
+                        />
+                      </TableCell>
+                    )}
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={6} align='center'>
+                    {isLoading && currentPage === 0
+                      ? '상품을 로딩 중입니다...'
+                      : '등록된 상품이 없습니다.'}
                   </TableCell>
-                  <TableCell>{product.name}</TableCell>
-                  <TableCell>{product.price.toLocaleString()}원</TableCell>
-                  <TableCell>{product.stockQuantity}</TableCell>
-                  {!isAdmin && (
-                    <TableCell>
-                      <TextField
-                        type='number'
-                        value={product.quantity || 0}
-                        size='small'
-                        onChange={(e) =>
-                          setProductList((prevList) =>
-                            prevList.map((p) =>
-                              p.id === product.id
-                                ? { ...p, quantity: parseInt(e.target.value) }
-                                : p,
-                            ),
-                          )
-                        }
-                        sx={{ width: 80 }}
-                      />
-                    </TableCell>
-                  )}
-                  {!isAdmin && (
-                    <TableCell>
-                      <Checkbox
-                        checked={!!selected[product.id]}
-                        onChange={(e) =>
-                          handleCheckboxChange(product.id, e.target.checked)
-                        }
-                      />
-                    </TableCell>
-                  )}
                 </TableRow>
-              ))}
+              )}
             </TableBody>
           </Table>
         </CardContent>

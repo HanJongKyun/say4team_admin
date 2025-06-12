@@ -11,6 +11,7 @@ import ProductDetail from '../components/ProductDetail';
 import ProductUpdate from '../components/ProductUpdate';
 import MemberList from '../components/MemberList';
 import OrderList from '../components/OrderList';
+import CategoryList from '../components/CategoryList';
 
 const AppRouter = () => {
   return (
@@ -38,6 +39,12 @@ const AppRouter = () => {
         }
       />
       <Route
+        path='/product/detail/:id'
+        element={
+          <PrivateRouter element={<ProductDetail />} requiredRole='ADMIN' />
+        }
+      />
+      <Route
         path='/order/manage'
         element={<PrivateRouter element={<OrderList />} requiredRole='ADMIN' />}
       />
@@ -48,9 +55,21 @@ const AppRouter = () => {
         }
       />
       <Route
-        path='/product/detail/:id'
+        path='/category/manage'
         element={
-          <PrivateRouter element={<ProductDetail />} requiredRole='ADMIN' />
+          <PrivateRouter element={<CategoryList />} requiredRole='ADMIN' />
+        }
+      />
+      <Route
+        path='/category/create'
+        element={
+          <PrivateRouter element={<ProductCreate />} requiredRole='ADMIN' />
+        }
+      />
+      <Route
+        path='/category/edit/:id'
+        element={
+          <PrivateRouter element={<ProductUpdate />} requiredRole='ADMIN' />
         }
       />
     </Routes>
