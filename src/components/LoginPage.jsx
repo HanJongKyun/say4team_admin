@@ -71,9 +71,13 @@ const LoginPage = () => {
   };
   const handleKakaoLogin = () => {
     console.log('카카오 로그인 클릭!');
+    //로그인 상태 구분하기위한 상태값 전달
+    const adminLoginState = btoa(
+      JSON.stringify({ clientType: 'admin', csrfToken: '...' }),
+    );
     //로그인 팝업창 열기
     const popup = window.open(
-      `https://kauth.kakao.com/oauth/authorize?client_id=${KAKAO_CLIENT_ID}&redirect_uri=${KAKAO_REDIRECT_URI}&response_type=code&prompt=login`,
+      `https://kauth.kakao.com/oauth/authorize?client_id=${KAKAO_CLIENT_ID}&redirect_uri=${KAKAO_REDIRECT_URI}&response_type=code&prompt=login&state=${adminLoginState}`,
       'kakao-login',
       'width=500,height=600,scrollbars=yes,resizable=yes',
     );
