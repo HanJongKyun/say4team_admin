@@ -29,8 +29,6 @@ const getOrderStatusLabel = (status) => {
   }
 };
 
-// 주문 전체 상태 계산 함수 제거했습니다.
-
 const OrderList = () => {
   const [orders, setOrders] = useState([]);
   const [page, setPage] = useState(1);
@@ -175,7 +173,11 @@ const OrderList = () => {
             ? new Date(order.orderedAt).toLocaleDateString()
             : '알 수 없음';
 
-          // 주문 전체 상태 계산 부분 제거했습니다.
+          // 주문 아이템 총 합계 계산
+          const totalAmount = order.orderItems.reduce(
+            (sum, item) => sum + item.unitPrice * item.quantity,
+            0,
+          );
 
           return (
             <div key={order.orderId} className='order-card'>
@@ -192,7 +194,10 @@ const OrderList = () => {
                 <strong>주문 날짜:</strong> {orderDate}
               </div>
 
-              {/* 주문 상태 출력 부분 삭제했습니다 */}
+              {/* 주문별 총 금액 한 번만 표시 */}
+              <div>
+                <b>총 금액:</b> {totalAmount.toLocaleString()}원
+              </div>
 
               {order.orderItems.map((item) => {
                 const imageUrl = item.mainImagePath;
@@ -201,10 +206,7 @@ const OrderList = () => {
                     key={`${order.orderId}-${item.orderItemId}`}
                     className='order-item-card'
                   >
-                    <div>
-                      <b>총 금액:</b>{' '}
-                      {(item.unitPrice * item.quantity).toLocaleString()}원
-                    </div>
+                    {/* 아이템별 총 금액 표시 제거 */}
 
                     <div className='product-info-container'>
                       <div className='product-image-wrapper'>
