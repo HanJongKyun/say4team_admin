@@ -58,7 +58,7 @@ const OrderList = () => {
     fetchingRef.current = true;
 
     try {
-      const url = `${API_BASE_URL}${ORDER}/admin/all`; // 관리자용: 전체 사용자 주문 전체 조회
+      const url = `${API_BASE_URL}${ORDER}/admin/all`;
       const response = await axiosInstance.get(url, {
         params: { page: pageRef.current, sort: sortRef.current },
       });
@@ -103,7 +103,6 @@ const OrderList = () => {
   }, [fetchOrders]);
 
   useEffect(() => {
-    // 정렬 변경 시 초기화
     setOrders([]);
     setPage(1);
     setHasMore(true);
@@ -123,7 +122,7 @@ const OrderList = () => {
     if (!confirmChange) return;
 
     try {
-      const url = `${API_BASE_URL}${ORDER}/items/${orderItemId}/status`; // 개별 상품 관리 전용 기능
+      const url = `${API_BASE_URL}${ORDER}/items/${orderItemId}/status`;
       await axiosInstance.put(url, null, {
         params: { status: newStatus },
       });
@@ -182,10 +181,13 @@ const OrderList = () => {
                 className='order-card'
               >
                 <div>
-                  <b>주문 ID:</b> {order.orderId}
+                  <b>주문 번호:</b> {order.orderId}
                 </div>
                 <div>
                   <b>사용자:</b> {order.email || '알 수 없음'}
+                </div>
+                <div>
+                  <b>배송지:</b> {order.address || '주소 정보 없음'}
                 </div>
                 <div>
                   <strong>주문 날짜:</strong> {orderDate}
