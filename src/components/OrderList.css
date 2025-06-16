@@ -100,7 +100,7 @@ h2 {
 .selectlist {
   padding: 8px 12px;
   border-radius: 6px;
-  border: 1px solid #ccc;
+  border: none;
   font-size: 15px;
 }
 
