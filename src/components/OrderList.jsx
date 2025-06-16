@@ -29,6 +29,8 @@ const getOrderStatusLabel = (status) => {
   }
 };
 
+// 주문 전체 상태 계산 함수 제거했습니다.
+
 const OrderList = () => {
   const [orders, setOrders] = useState([]);
   const [page, setPage] = useState(1);
@@ -168,82 +170,91 @@ const OrderList = () => {
       <div className='order-list'>
         {orders.length === 0 && <p>주문 내역이 없습니다.</p>}
 
-        {orders.flatMap((order) =>
-          order.orderItems.map((item) => {
-            const imageUrl = item.mainImagePath;
-            const orderDate = order.orderedAt
-              ? new Date(order.orderedAt).toLocaleDateString()
-              : '알 수 없음';
+        {orders.map((order) => {
+          const orderDate = order.orderedAt
+            ? new Date(order.orderedAt).toLocaleDateString()
+            : '알 수 없음';
 
-            return (
-              <div
-                key={`${order.orderId}-${item.orderItemId}`}
-                className='order-card'
-              >
-                <div>
-                  <b>주문 번호:</b> {order.orderId}
-                </div>
-                <div>
-                  <b>사용자:</b> {order.email || '알 수 없음'}
-                </div>
-                <div>
-                  <b>배송지:</b> {order.address || '주소 정보 없음'}
-                </div>
-                <div>
-                  <strong>주문 날짜:</strong> {orderDate}
-                </div>
-                <div>
-                  <b>총 금액:</b>{' '}
-                  {(item.unitPrice * item.quantity).toLocaleString()}원
-                </div>
+          // 주문 전체 상태 계산 부분 제거했습니다.
 
-                <div className='product-info-container'>
-                  <div className='product-image-wrapper'>
-                    <img
-                      src={imageUrl || '/default-image.png'}
-                      alt={item.productName || '상품 이미지'}
-                      className='order-image'
-                    />
-                  </div>
-
-                  <div className='product-details'>
-                    <div>
-                      <b>상품명:</b> {item.productName || '상품 정보 없음'}
-                    </div>
-                    <div>
-                      <b>수량:</b> {item.quantity}
-                    </div>
-                    <div>
-                      <b>단가:</b> {item.unitPrice.toLocaleString()}원
-                    </div>
-                  </div>
-                </div>
-
-                <label>
-                  <b>상태:</b>{' '}
-                  <select
-                    value={item.orderStatus || '----'}
-                    onChange={(e) =>
-                      handleStatusChange(
-                        order.orderId,
-                        item.orderItemId,
-                        e.target.value,
-                      )
-                    }
-                    className='selectlist'
-                    disabled={item.orderStatus === 'CANCELED'}
-                  >
-                    {ORDER_STATUSES.map((status) => (
-                      <option key={status} value={status}>
-                        {getOrderStatusLabel(status)}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+          return (
+            <div key={order.orderId} className='order-card'>
+              <div>
+                <b>주문 번호:</b> {order.orderId}
               </div>
-            );
-          }),
-        )}
+              <div>
+                <b>사용자:</b> {order.email || '알 수 없음'}
+              </div>
+              <div>
+                <b>배송지:</b> {order.address || '주소 정보 없음'}
+              </div>
+              <div>
+                <strong>주문 날짜:</strong> {orderDate}
+              </div>
+
+              {/* 주문 상태 출력 부분 삭제했습니다 */}
+
+              {order.orderItems.map((item) => {
+                const imageUrl = item.mainImagePath;
+                return (
+                  <div
+                    key={`${order.orderId}-${item.orderItemId}`}
+                    className='order-item-card'
+                  >
+                    <div>
+                      <b>총 금액:</b>{' '}
+                      {(item.unitPrice * item.quantity).toLocaleString()}원
+                    </div>
+
+                    <div className='product-info-container'>
+                      <div className='product-image-wrapper'>
+                        <img
+                          src={imageUrl || '/default-image.png'}
+                          alt={item.productName || '상품 이미지'}
+                          className='order-image'
+                        />
+                      </div>
+
+                      <div className='product-details'>
+                        <div>
+                          <b>상품명:</b> {item.productName || '상품 정보 없음'}
+                        </div>
+                        <div>
+                          <b>수량:</b> {item.quantity}
+                        </div>
+                        <div>
+                          <b>단가:</b> {item.unitPrice.toLocaleString()}원
+                        </div>
+                      </div>
+                    </div>
+
+                    <label>
+                      <b>상태:</b>{' '}
+                      <select
+                        value={item.orderStatus || '----'}
+                        onChange={(e) =>
+                          handleStatusChange(
+                            order.orderId,
+                            item.orderItemId,
+                            e.target.value,
+                          )
+                        }
+                        className='selectlist'
+                        disabled={item.orderStatus === 'CANCELED'}
+                      >
+                        {ORDER_STATUSES.map((status) => (
+                          <option key={status} value={status}>
+                            {getOrderStatusLabel(status)}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })}
       </div>
 
       <div ref={observerRef} style={{ height: '1px' }}></div>
