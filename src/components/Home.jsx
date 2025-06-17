@@ -24,7 +24,7 @@ const Home = () => {
           gutterBottom
           sx={{ wordBreak: 'keep-word' }}
         >
-          saytouche 관리자 페이지 ㅇㅁㄴㅇㅁㄴㅇㅁㄴㅇㅁㄴㅁㄴㅇㅁㄴ
+          saytouche 관리자 페이지
         </Typography>
 
         <Typography variant='h6' color='text.secondary' sx={{ mb: 4 }}>
