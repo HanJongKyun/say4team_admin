@@ -194,7 +194,7 @@ const OrderList = () => {
                 <strong>주문 날짜:</strong> {orderDate}
               </div>
 
-              {/* 주문별 총 금액 한 번만 표시 */}
+              {/* 주문별 총 금액 한 번만 표시*/}
               <div>
                 <b>총 금액:</b> {totalAmount.toLocaleString()}원
               </div>
