@@ -5,7 +5,7 @@ name: Deploy React App to S3 (Using AWS Official Actions) # 워크플로우 이�
 on:
   push:
     branches:
-      - main # main 브랜치에 코드가 푸시될 때 이 워크플로우를 실행합니다.
+      - main # main 브랜치에 코드가 푸시될 때 이 워크플로우를 실행
 
 jobs:
   build-and-deploy:
@@ -18,15 +18,13 @@ jobs:
       - name: Set up Node.js # 2. Node.js 환경 설정
         uses: actions/setup-node@v4 # GitHub Actions Node.js 설정 액션
         with:
-          node-version: '20' # 프로젝트에 필요한 Node.js 버전 지정 (예: '18', '20')
+          node-version: '20' # 프로젝트에 필요한 Node.js 버전 지정
 
       - name: Install Dependencies # 3. React 프로젝트 의존성 설치
-        run: npm install # 또는 yarn install (프로젝트에 따라 선택)
+        run: npm install
 
       - name: Build React App # 4. React 프로젝트 빌드
-        # CI=false는 Create React App (CRA)에서 경고를 오류로 처리하지 않도록 합니다.
-        # Vite 등 다른 빌더 사용 시 필요 없거나 다른 방식으로 처리될 수 있습니다.
-        run: CI=false npm run build # 또는 yarn build
+        run: CI=false npm run build
 
       - name: Configure AWS credentials # 5. AWS 자격 증명 설정 (AWS 공식 액션)
         uses: aws-actions/configure-aws-credentials@v4
@@ -41,4 +39,4 @@ jobs:
           # S3_BUCKET Secret에 저장된 버킷 이름을 사용합니다.
           # --delete 옵션은 S3 버킷에만 있고 로컬 'dist'에 없는 파일을 삭제합니다.
           aws s3 sync ./dist s3://${{ secrets.S3_BUCKET }} --delete
-          # 만약 'npm run build' 결과물이 'build' 폴더에 생성된다면, './dist'를 './build'로 변경해야 합니다.
+          # 만약 'npm run build' 결과물이 'build' 폴더에 생성된다면, './dist'를 './build'로 변경해야 함.
