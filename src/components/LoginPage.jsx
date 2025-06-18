@@ -94,33 +94,6 @@ const LoginPage = () => {
               <Button
                 variant='outlined'
                 fullWidth
-                onClick={handleGoogleLogin}
-                sx={{
-                  mb: 2,
-                  borderColor: '#4285f4',
-                  color: '#4285f4',
-                  '&:hover': {
-                    borderColor: '#3367d6',
-                    backgroundColor: '#f8f9fa',
-                  },
-                  textTransform: 'none',
-                  fontSize: '16px',
-                  height: '48px',
-                }}
-                startIcon={
-                  <img
-                    src='https://developers.google.com/identity/images/g-logo.png'
-                    alt='Google'
-                    style={{ width: '20px', height: '20px' }}
-                  />
-                }
-              >
-                Google로 로그인
-              </Button>
-
-              <Button
-                variant='outlined'
-                fullWidth
                 onClick={handleKakaoLogin}
                 sx={{
                   mb: 2,
