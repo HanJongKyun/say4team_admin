@@ -8,7 +8,7 @@ if (clientHostName === 'localhost') {
   backendHostName = 'http://localhost:8000';
 } else if (clientHostName === 'say4teamadmin.shop') {
   // 배포해서 현재 서비스 중
-  backendHostName = 'http://54.180.95.206:8000';
+  backendHostName = 'https://api.say4team.shop';
 }
 
 export const API_BASE_URL = backendHostName;
