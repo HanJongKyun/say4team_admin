@@ -158,11 +158,6 @@ const LoginPage = () => {
               />
               <Grid container spacing={2}>
                 <Grid item xs={6}>
-                  <Button color='secondary' fullWidth>
-                    비밀번호 변경
-                  </Button>
-                </Grid>
-                <Grid item xs={6}>
                   <Button
                     type='submit'
                     color='primary'
