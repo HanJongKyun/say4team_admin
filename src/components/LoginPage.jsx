@@ -30,7 +30,7 @@ const LoginPage = () => {
   useEffect(() => {
     const handleMessage = (e) => {
       if (
-        e.origin !== 'http://say4teamadmin.shop' &&
+        e.origin !== 'https://say4teamadmin.shop' &&
         e.origin !== window.location.origin
       )
         return;
