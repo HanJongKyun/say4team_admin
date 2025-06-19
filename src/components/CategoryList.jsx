@@ -38,6 +38,7 @@ const CategoryList = ({ pageTitle }) => {
   }
 
   // --- 상태 변수 정의 ---
+  // --- 상태 변수 정의 ---
   const [searchType, setSearchType] = useState('ALL');
   const [searchValue, setSearchValue] = useState('');
   const [categoryList, setCategoryList] = useState([]);
